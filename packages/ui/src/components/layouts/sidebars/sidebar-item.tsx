@@ -1,6 +1,5 @@
 import { LocalNode } from '@colanode/client/types';
 import { NodeRole } from '@colanode/core';
-import { CategorySidebarItem } from '@colanode/ui/components/categories/category-sidebar-item';
 import { ChannelSidebarItem } from '@colanode/ui/components/channels/channel-sidebar-item';
 import { ChatSidebarItem } from '@colanode/ui/components/chats/chat-sidebar-item';
 import { DatabaseSidebarItem } from '@colanode/ui/components/databases/database-sidiebar-item';
@@ -18,8 +17,6 @@ export const SidebarItem = ({
   role,
 }: SidebarItemProps): React.ReactNode => {
   switch (node.type) {
-    case 'category':
-      return <CategorySidebarItem category={node} role={role} />;
     case 'channel':
       return <ChannelSidebarItem channel={node} role={role} />;
     case 'chat':

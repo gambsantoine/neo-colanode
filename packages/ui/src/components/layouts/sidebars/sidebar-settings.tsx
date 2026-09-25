@@ -106,7 +106,11 @@ export const SidebarSettings = () => {
       </div>
       <div className="flex w-full min-w-0 flex-col gap-1">
         <SidebarHeader title="Account settings" />
-        <Link from="/workspace/$userId" to="account">
+        <Link
+          from="/workspace/$userId"
+          to="account"
+          activeOptions={{ exact: true }}
+        >
           {({ isActive }) => (
             <SidebarSettingsItem
               title="General"

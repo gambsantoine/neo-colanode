@@ -1,8 +1,12 @@
 import { count, eq, inArray, useLiveQuery } from '@tanstack/react-db';
 import { MessageCircle, Plus, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
-import { LocalSpaceNode, SidebarMenuType, UploadStatus } from '@colanode/client/types';
+import {
+  LocalSpaceNode,
+  SidebarMenuType,
+  UploadStatus,
+} from '@colanode/client/types';
 import { SidebarMenuFooter } from '@colanode/ui/components/layouts/sidebars/sidebar-menu-footer';
 import { SidebarMenuHeader } from '@colanode/ui/components/layouts/sidebars/sidebar-menu-header';
 import { SidebarMenuIcon } from '@colanode/ui/components/layouts/sidebars/sidebar-menu-icon';
@@ -11,6 +15,8 @@ import { SpaceCreateDialog } from '@colanode/ui/components/spaces/space-create-d
 import { Separator } from '@colanode/ui/components/ui/separator';
 import { useRadar } from '@colanode/ui/contexts/radar';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
+import { useMetadata } from '@colanode/ui/hooks/use-metadata';
+import { moveSpace, sortSpaces } from '@colanode/ui/lib/spaces';
 
 interface SidebarMenuProps {
   value: SidebarMenuType;
@@ -43,7 +49,28 @@ export const SidebarMenu = ({
     [workspace.userId]
   );
 
-  const spaces = spaceListQuery.data.map((node) => node as LocalSpaceNode);
+  const [spaceOrder, setSpaceOrder] = useMetadata<string[]>(
+    workspace.userId,
+    'sidebar.spaceOrder'
+  );
+
+  const spaces = sortSpaces(
+    spaceListQuery.data.map((node) => node as LocalSpaceNode),
+    spaceOrder
+  );
+
+  const handleMoveSpace = useCallback(
+    (spaceId: string, after: string | null) => {
+      setSpaceOrder(
+        moveSpace(
+          spaces.map((space) => space.id),
+          spaceId,
+          after
+        )
+      );
+    },
+    [spaces, setSpaceOrder]
+  );
 
   const pendingUploadsQuery = useLiveQuery(
     (q) =>
@@ -83,10 +110,12 @@ export const SidebarMenu = ({
       </div>
       <Separator className="w-8" />
       <div className="flex flex-col gap-1 mt-2 w-full px-2 items-center grow overflow-y-auto">
-        {spaces.map((space) => (
+        {spaces.map((space, index) => (
           <SidebarSpaceIcon
             key={space.id}
             space={space}
+            previousId={spaces[index - 1]?.id ?? null}
+            onMove={handleMoveSpace}
             isActive={value === 'spaces' && activeSpaceId === space.id}
             onClick={() => {
               onSelectSpace(space.id);

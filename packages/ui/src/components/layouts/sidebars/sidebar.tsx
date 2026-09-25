@@ -9,6 +9,7 @@ import { SidebarSpaces } from '@colanode/ui/components/layouts/sidebars/sidebar-
 import { useApp } from '@colanode/ui/contexts/app';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { useMetadata } from '@colanode/ui/hooks/use-metadata';
+import { sortSpaces } from '@colanode/ui/lib/spaces';
 import { cn } from '@colanode/ui/lib/utils';
 
 export const Sidebar = () => {
@@ -29,7 +30,15 @@ export const Sidebar = () => {
     [workspace.userId]
   );
 
-  const spaces = spaceListQuery.data.map((node) => node as LocalSpaceNode);
+  const [spaceOrder] = useMetadata<string[]>(
+    workspace.userId,
+    'sidebar.spaceOrder'
+  );
+
+  const spaces = sortSpaces(
+    spaceListQuery.data.map((node) => node as LocalSpaceNode),
+    spaceOrder
+  );
   const activeSpaceId =
     spaces.find((space) => space.id === storedActiveSpaceId)?.id ??
     spaces[0]?.id;
