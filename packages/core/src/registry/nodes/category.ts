@@ -4,11 +4,13 @@ import { extractNodeRole } from '@colanode/core/lib/nodes';
 import { hasNodeRole } from '@colanode/core/lib/permissions';
 import { NodeAttributes } from '@colanode/core/registry/nodes';
 import { NodeModel } from '@colanode/core/registry/nodes/core';
+import { spaceChildAttributesSchema } from '@colanode/core/registry/nodes/space';
 
 export const categoryAttributesSchema = z.object({
   type: z.literal('category'),
   name: z.string(),
   parentId: z.string(),
+  children: z.record(z.string(), spaceChildAttributesSchema).optional(),
 });
 
 export type CategoryAttributes = z.infer<typeof categoryAttributesSchema>;
