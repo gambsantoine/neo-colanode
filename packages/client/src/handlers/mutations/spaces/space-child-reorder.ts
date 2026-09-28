@@ -8,8 +8,10 @@ import {
   SpaceChildReorderMutationOutput,
 } from '@colanode/client/mutations';
 import {
+  CategoryAttributes,
   compareString,
   generateFractionalIndex,
+  NodeAttributes,
   SpaceAttributes,
 } from '@colanode/core';
 
@@ -19,6 +21,8 @@ interface NodeFractionalIndex {
   customIndex: string | null;
 }
 
+type ContainerAttributes = SpaceAttributes | CategoryAttributes;
+
 export class SpaceChildReorderMutationHandler
   extends WorkspaceMutationHandlerBase
   implements MutationHandler<SpaceChildReorderMutationInput>
@@ -27,31 +31,62 @@ export class SpaceChildReorderMutationHandler
     input: SpaceChildReorderMutationInput
   ): Promise<SpaceChildReorderMutationOutput> {
     const workspace = this.getWorkspace(input.userId);
-    const children = await workspace.database
-      .selectFrom('nodes')
-      .where('parent_id', '=', input.spaceId)
-      .orderBy('id')
-      .selectAll()
-      .execute();
 
-    if (children.length === 0) {
+    const parent = await workspace.database
+      .selectFrom('nodes')
+      .where('id', '=', input.parentId)
+      .selectAll()
+      .executeTakeFirst();
+
+    const isValidParent =
+      parent &&
+      ((parent.type === 'space' && parent.id === input.spaceId) ||
+        (parent.type === 'category' && parent.parent_id === input.spaceId));
+
+    if (!isValidParent) {
       throw new MutationError(
-        MutationErrorCode.SpaceUpdateFailed,
-        'Space has no children.'
+        MutationErrorCode.SpaceNotFound,
+        'Target container not found in this space.'
       );
     }
 
-    const result = await workspace.nodes.updateNode<SpaceAttributes>(
-      input.spaceId,
+    const child = await workspace.database
+      .selectFrom('nodes')
+      .where('id', '=', input.childId)
+      .selectAll()
+      .executeTakeFirst();
+
+    if (!child || child.root_id !== input.spaceId) {
+      throw new MutationError(
+        MutationErrorCode.NodeNotFound,
+        'Node not found in this space.'
+      );
+    }
+
+    if (child.type === 'category' && parent.type !== 'space') {
+      throw new MutationError(
+        MutationErrorCode.SpaceUpdateFailed,
+        'Categories cannot be nested.'
+      );
+    }
+
+    const children = await workspace.database
+      .selectFrom('nodes')
+      .where('parent_id', '=', input.parentId)
+      .selectAll()
+      .execute();
+
+    const result = await workspace.nodes.updateNode<ContainerAttributes>(
+      input.parentId,
       (attributes) => {
-        const newIndex = this.generateSpaceChildIndex(
+        const indexes = this.generateChildIndexes(
           attributes,
           children,
           input.childId,
           input.after
         );
 
-        if (!newIndex) {
+        if (!indexes) {
           throw new MutationError(
             MutationErrorCode.SpaceUpdateFailed,
             'Failed to generate new index.'
@@ -59,11 +94,13 @@ export class SpaceChildReorderMutationHandler
         }
 
         const childrenSettings = attributes.children ?? {};
-        childrenSettings[input.childId] = {
-          ...(childrenSettings[input.childId] ?? {}),
-          id: input.childId,
-          index: newIndex,
-        };
+        for (const [id, index] of Object.entries(indexes)) {
+          childrenSettings[id] = {
+            ...(childrenSettings[id] ?? {}),
+            id,
+            index,
+          };
+        }
 
         attributes.children = childrenSettings;
         return attributes;
@@ -73,8 +110,46 @@ export class SpaceChildReorderMutationHandler
     if (result === 'unauthorized') {
       throw new MutationError(
         MutationErrorCode.SpaceUpdateForbidden,
-        "You don't have permission to update this space."
+        "You don't have permission to reorder this space."
       );
+    }
+
+    if (result !== 'success') {
+      throw new MutationError(
+        MutationErrorCode.SpaceUpdateFailed,
+        'Failed to reorder space.'
+      );
+    }
+
+    if (child.parent_id !== input.parentId) {
+      const moveResult = await workspace.nodes.updateNode<NodeAttributes>(
+        input.childId,
+        (attributes) => {
+          if (attributes.type === 'space' || attributes.type === 'chat') {
+            throw new MutationError(
+              MutationErrorCode.SpaceUpdateFailed,
+              'This node cannot be moved.'
+            );
+          }
+
+          attributes.parentId = input.parentId;
+          return attributes;
+        }
+      );
+
+      if (moveResult === 'unauthorized') {
+        throw new MutationError(
+          MutationErrorCode.SpaceUpdateForbidden,
+          "You don't have permission to move this node."
+        );
+      }
+
+      if (moveResult !== 'success') {
+        throw new MutationError(
+          MutationErrorCode.SpaceUpdateFailed,
+          'Failed to move node.'
+        );
+      }
     }
 
     return {
@@ -82,20 +157,20 @@ export class SpaceChildReorderMutationHandler
     };
   }
 
-  private generateSpaceChildIndex(
-    attributes: SpaceAttributes,
+  /**
+   * Returns the indexes to persist in the container: the moved child's new
+   * index plus the current effective index of every sibling that has none yet,
+   * so the order stays stable when nodes join or leave the container.
+   */
+  private generateChildIndexes(
+    attributes: ContainerAttributes,
     children: SelectNode[],
     childId: string,
     after: string | null
-  ): string | null {
-    const child = children.find((c) => c.id === childId);
-    if (!child) {
-      return null;
-    }
-
+  ): Record<string, string> | null {
     const sortedById = children.toSorted((a, b) => compareString(a.id, b.id));
-    const indexes: NodeFractionalIndex[] = [];
     const childrenSettings = attributes.children ?? {};
+    const indexes: NodeFractionalIndex[] = [];
     let lastIndex: string | null = null;
 
     for (const child of sortedById) {
@@ -107,62 +182,45 @@ export class SpaceChildReorderMutationHandler
       });
     }
 
-    const sortedIndexes = indexes.sort((a, b) =>
-      compareString(
-        a.customIndex ?? a.defaultIndex,
-        b.customIndex ?? b.defaultIndex
-      )
-    );
+    const siblings = indexes
+      .filter((index) => index.id !== childId)
+      .map((index) => ({
+        id: index.id,
+        index: index.customIndex ?? index.defaultIndex,
+        pinned: index.customIndex !== null,
+      }))
+      .sort((a, b) => compareString(a.index, b.index));
+
+    const result: Record<string, string> = {};
+    for (const sibling of siblings) {
+      if (!sibling.pinned) {
+        result[sibling.id] = sibling.index;
+      }
+    }
 
     if (after === null) {
-      const firstIndex = sortedIndexes[0];
-      if (!firstIndex) {
-        return generateFractionalIndex(null, null);
-      }
-
-      const nextIndex = firstIndex.customIndex ?? firstIndex.defaultIndex;
-      return generateFractionalIndex(null, nextIndex);
+      const first = siblings[0];
+      result[childId] = generateFractionalIndex(null, first?.index ?? null);
+      return result;
     }
 
-    const afterNodeIndex = sortedIndexes.findIndex((node) => node.id === after);
-    if (afterNodeIndex === -1) {
-      return null;
-    }
-
-    const afterNode = sortedIndexes[afterNodeIndex];
+    const afterPosition = siblings.findIndex((node) => node.id === after);
+    const afterNode = siblings[afterPosition];
     if (!afterNode) {
       return null;
     }
 
-    const previousIndex = afterNode.customIndex ?? afterNode.defaultIndex;
-    let nextIndex: string | null = null;
-    if (afterNodeIndex < sortedIndexes.length - 1) {
-      const nextNode = sortedIndexes[afterNodeIndex + 1];
-      if (!nextNode) {
-        return null;
-      }
+    // Skip siblings sharing the same index, which would make the key
+    // generation fail.
+    const nextNode = siblings
+      .slice(afterPosition + 1)
+      .find((node) => compareString(node.index, afterNode.index) > 0);
 
-      nextIndex = nextNode.customIndex ?? nextNode.defaultIndex;
-    }
-
-    let newIndex = generateFractionalIndex(previousIndex, nextIndex);
-
-    const maxDefaultIndex = sortedIndexes
-      .map((index) => index.defaultIndex)
-      .sort((a, b) => -compareString(a, b))[0]!;
-
-    const newPotentialDefaultIndex = generateFractionalIndex(
-      maxDefaultIndex,
-      null
+    result[childId] = generateFractionalIndex(
+      afterNode.index,
+      nextNode?.index ?? null
     );
 
-    if (newPotentialDefaultIndex === newIndex) {
-      newIndex = generateFractionalIndex(
-        previousIndex,
-        newPotentialDefaultIndex
-      );
-    }
-
-    return newIndex;
+    return result;
   }
 }

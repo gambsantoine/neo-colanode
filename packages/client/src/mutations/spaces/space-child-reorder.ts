@@ -2,6 +2,8 @@ export type SpaceChildReorderMutationInput = {
   type: 'space.child.reorder';
   userId: string;
   spaceId: string;
+  /** Target container: the space itself or one of its categories. */
+  parentId: string;
   childId: string;
   after: string | null;
 };

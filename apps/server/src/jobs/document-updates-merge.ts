@@ -113,6 +113,7 @@ const processDocumentUpdates = async (
     .where('document_id', '=', documentId)
     .where('revision', '<', firstUpdate.revision)
     .where('created_at', '>=', cutoffTime)
+    .orderBy('revision', 'desc')
     .executeTakeFirst();
 
   const allUpdates = [...documentUpdates];
@@ -173,7 +174,12 @@ const groupUpdatesByMergeWindow = (
       lastUpdateInGroup.created_at.getTime();
     const timeDiffSeconds = Math.abs(timeDiff / 1000);
 
-    if (timeDiffSeconds <= mergeWindow) {
+    // Only merge consecutive updates from the same user so that each merged
+    // update stays attributable to a single author in the history.
+    const sameAuthor =
+      currentUpdate.created_by === lastUpdateInGroup.created_by;
+
+    if (sameAuthor && timeDiffSeconds <= mergeWindow) {
       currentGroup.push(currentUpdate);
     } else {
       timeGroups.push(currentGroup);
