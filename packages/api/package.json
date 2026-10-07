@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@colanode/core": "*",
-    "fastify": "^5.8.4",
+    "fastify": "^5.12.5",
     "fastify-plugin": "^5.1.0",
     "fastify-type-provider-zod": "^6.1.0",
     "zod": "^4.3.6"
