@@ -5,6 +5,8 @@ import {
   Node as ProseMirrorNode,
 } from '@tiptap/pm/model';
 
+import { renderPlantUml, svgToDataUrl } from '@colanode/ui/lib/plantuml';
+
 const PDF_CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -126,6 +128,8 @@ hr {
 .pdf-file img { display: block; max-width: 100%; max-height: 600px; }
 .pdf-file figcaption { font-size: 0.8em; color: #6b7280; margin-top: 0.3em; }
 .pdf-mention { color: #1d4ed8; font-weight: 500; }
+.pdf-plantuml { margin: 1em 0; text-align: center; }
+.pdf-plantuml img { display: inline-block; max-width: 100%; }
 
 @media print {
   pre, blockquote, table, figure, .pdf-node-ref { page-break-inside: avoid; }
@@ -233,6 +237,43 @@ const collectImageSources = async (
 };
 
 /**
+ * Renders every PlantUML block to an SVG data URL (light theme) ahead of the
+ * synchronous serialization. Codes that fail to render map to null so the
+ * serializer can fall back to the raw source.
+ */
+const collectPlantUmlImages = async (
+  editor: Editor
+): Promise<Map<string, string | null>> => {
+  const codes = new Set<string>();
+  editor.state.doc.descendants((node) => {
+    if (node.type.name !== 'plantuml') {
+      return;
+    }
+
+    const code = (node.attrs.code as string | null) ?? '';
+    if (code.trim().length > 0) {
+      codes.add(code);
+    }
+
+    return false;
+  });
+
+  const images = new Map<string, string | null>();
+  await Promise.all(
+    Array.from(codes).map(async (code) => {
+      try {
+        const svg = await renderPlantUml(code, { dark: false });
+        images.set(code, svgToDataUrl(svg));
+      } catch {
+        images.set(code, null);
+      }
+    })
+  );
+
+  return images;
+};
+
+/**
  * Serializes the editor content to HTML for PDF export. Custom atom nodes
  * (mentions, page/folder/database references, files) have no meaningful HTML
  * representation of their own, so they are replaced with readable fallbacks.
@@ -242,7 +283,10 @@ export async function serializeEditorForPdf(
   editor: Editor,
   resolver: PdfExportResolver
 ): Promise<string> {
-  const imageSources = await collectImageSources(editor);
+  const [imageSources, plantUmlImages] = await Promise.all([
+    collectImageSources(editor),
+    collectPlantUmlImages(editor),
+  ]);
   const base = DOMSerializer.fromSchema(editor.schema);
 
   const renderFile = (
@@ -305,6 +349,23 @@ export async function serializeEditorForPdf(
     file: (node: ProseMirrorNode) => {
       const id = node.attrs.id as string | null;
       return renderFile(node, id ? resolver.getNodeName(id) : undefined);
+    },
+    plantuml: (node: ProseMirrorNode): DOMOutputSpec => {
+      const code = (node.attrs.code as string | null) ?? '';
+      if (code.trim().length === 0) {
+        return ['div'];
+      }
+
+      const src = plantUmlImages.get(code);
+      if (src) {
+        return [
+          'figure',
+          { class: 'pdf-plantuml' },
+          ['img', { src, alt: 'PlantUML diagram' }],
+        ];
+      }
+
+      return ['pre', ['code', code]];
     },
     tempFile: (node: ProseMirrorNode) => {
       const id = node.attrs.id as string | null;

@@ -87,6 +87,18 @@ export const workspaceDownloadsRouteMask = createRouteMask({
   },
 });
 
+export const workspaceToolsPlantUmlRouteMask = createRouteMask({
+  routeTree: routeTree,
+  from: '/workspace/$userId/tools/plantuml',
+  to: '/$workspaceId/tools/plantuml',
+  params: (ctx) => {
+    const workspace = collections.workspaces.get(ctx.userId);
+    return {
+      workspaceId: workspace?.workspaceId ?? 'unknown',
+    };
+  },
+});
+
 export const accountSettingsRouteMask = createRouteMask({
   routeTree: routeTree,
   from: '/workspace/$userId/account',
@@ -157,6 +169,7 @@ export const routeMasks = [
   workspaceUsersRouteMask,
   workspaceUploadsRouteMask,
   workspaceDownloadsRouteMask,
+  workspaceToolsPlantUmlRouteMask,
   accountSettingsRouteMask,
   accountLogoutRouteMask,
   appAppearanceRouteMask,
