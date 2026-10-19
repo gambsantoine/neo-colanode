@@ -109,7 +109,7 @@ export const SidebarMenu = ({
         />
       </div>
       <Separator className="w-8" />
-      <div className="flex flex-col gap-1 mt-2 w-full px-2 items-center grow overflow-y-auto">
+      <div className="flex flex-col gap-1 mt-2 w-full px-2 items-center grow overflow-y-auto overflow-x-hidden">
         {spaces.map((space, index) => (
           <SidebarSpaceIcon
             key={space.id}

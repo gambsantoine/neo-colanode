@@ -87,6 +87,7 @@ import {
   Markdown,
 } from '@colanode/ui/editor/extensions';
 import { ToolbarMenu, ActionMenu } from '@colanode/ui/editor/menus';
+import { DocumentActionsBar } from '@colanode/ui/components/documents/document-actions-bar';
 
 interface DocumentEditorProps {
   node: LocalNode;
@@ -441,6 +442,7 @@ export const DocumentEditor = ({
           <ActionMenu editor={editor} />
         </Fragment>
       )}
+      {editor && <DocumentActionsBar editor={editor} node={node} />}
       <EditorContent editor={editor} />
     </>
   );
