@@ -1,123 +1,137 @@
 <div align="center">
-<img alt="Colanode cover" src="assets/images/colanode-github-cover.jpg">
+<img alt="Neo Colanode" src="assets/images/neo-colanode-github-cover.jpg">
 <p></p>
 <a target="_blank" href="https://opensource.org/licenses/Apache-2.0" style="background:none">
-    <img src="https://img.shields.io/badge/Licene-Apache_2.0-blue" style="height: 22px;" />
+    <img src="https://img.shields.io/badge/License-Apache_2.0-blue" style="height: 22px;" />
 </a>
-<a target="_blank" href="https://discord.gg/ZsnDwW3289" style="background:none">
-    <img alt="" src="https://img.shields.io/badge/Discord-Colanode-%235865F2" style="height: 22px;" />
-</a>
-<a href="https://x.com/colanode" target="_blank">
-  <img alt="" src="https://img.shields.io/twitter/follow/colanode.svg?style=social&label=Follow" style="height: 22px;" />
+<a target="_blank" href="https://github.com/colanode/colanode" style="background:none">
+    <img alt="" src="https://img.shields.io/badge/Fork_de-colanode%2Fcolanode-1d4ed8" style="height: 22px;" />
 </a>
 </div>
 
-# Colanode
+# Neo Colanode
 
-### Open-source & local-first collaboration workspace that you can self-host
+### Fork de [Colanode](https://github.com/colanode/colanode) : espace de collaboration open-source, local-first et auto-hébergeable
 
-Colanode is an all-in-one platform for easy collaboration, built to prioritize your data privacy and control. Designed with a **local-first** approach, it helps teams communicate, organize, and manage projects—whether online or offline. With Colanode, you get the flexibility of modern collaboration tools, plus the peace of mind that comes from owning your data.
+**Neo Colanode** est un fork de [Colanode](https://github.com/colanode/colanode). Il reprend sa base (chat temps réel, pages riches, bases de données, fichiers, synchronisation local-first via CRDT/Yjs) et y ajoute une API publique, un serveur MCP, une organisation des espaces façon Discord, des diagrammes PlantUML et l'export PDF.
 
-### What can you do with Colanode?
+> Neo Colanode n'est pas affilié à l'équipe Colanode. Les services hébergés (app.colanode.com, Colanode Cloud EU/US) et l'image Docker `ghcr.io/colanode/server` appartiennent au projet d'origine et **ne contiennent pas** les fonctionnalités de ce fork.
 
-- **Real-Time Chat:** Stay connected with instant messaging for teams and individuals.
-- **Rich Text Pages:** Create documents, wikis, and notes using an intuitive editor, similar to Notion.
-- **Customizable Databases:** Organize information with structured data, custom fields and dynamic views (table, kanban, calendar).
-- **File Management:** Store, share, and manage files effortlessly within secure workspaces.
+### Fonctionnalités héritées de Colanode
 
-Built for both individuals and teams, Colanode adapts to your needs, whether you're running a small project, managing a team, or collaborating across an entire organization. With its self-hosted model, you retain full control over your data while enjoying a polished, feature-rich experience.
+- **Chat temps réel** : messagerie instantanée pour les équipes et les individus.
+- **Pages en texte riche** : documents, wikis et notes dans un éditeur proche de Notion.
+- **Bases de données personnalisables** : champs, vues (table, kanban, calendrier).
+- **Gestion de fichiers** : stockage et partage dans des workspaces sécurisés.
+- **Local-first** : tout est écrit dans une base SQLite locale puis synchronisé en arrière-plan ; l'application fonctionne hors ligne.
 
-![Colanode preview](assets/images/colanode-desktop-preview.gif)
+### Ce qu'ajoute Neo Colanode
 
-## How it works
+- **Rail d'espaces façon Discord** : chaque espace est une icône permanente dans la barre latérale, réordonnable par glisser-déposer ; l'espace actif est mémorisé.
+- **Catégories** : nouveau type de nœud `category` pour regrouper pages, canaux, bases et dossiers à l'intérieur d'un espace, avec glisser-déposer entre catégories.
+- **Diagrammes PlantUML** : commande `/plantuml` dans l'éditeur et outil PlantUML dédié (menu *Outils*). Le rendu est fait **100 % en local** (`@plantuml/core` + Graphviz WASM), sans appel réseau.
+- **Export PDF / impression** : export d'une page en PDF (A4) sur desktop, impression via une iframe isolée sur le web ; les diagrammes PlantUML sont inclus.
+- **API publique REST** (`/api`) : workspaces, espaces, nœuds et documents, avec pagination et versioning, authentifiée par **clé API** (`Authorization: Bearer …`).
+- **Clés API** : création, liste et révocation au niveau du compte ou du workspace, depuis l'interface.
+- **Serveur MCP** (`apps/mcp`) : permet à un assistant IA (Claude, etc.) de lister les workspaces/espaces/nœuds, lire un document, créer une page, écrire du Markdown dans un document et renommer un nœud.
 
-Colanode includes a client app (web or desktop) and a self-hosted server. You can connect to multiple servers with a single app, each containing one or more **workspaces** for different teams or projects. After logging in, you pick a workspace to start collaborating—sending messages, editing pages, or updating database records.
+![Aperçu de Colanode](assets/images/colanode-desktop-preview.gif)
 
-### Local-first workflow
+## Dernières mises à jour
 
-All changes you make are saved to a local SQLite database first and then synced to the server. A background process handles this synchronization so you can keep working even if your computer or the server goes offline. Data reads also happen locally, ensuring immediate access to any content you have permissions to view.
+| Date | Changement |
+| --- | --- |
+| 19/10/2026 | Bloc `/plantuml` dans l'éditeur, outil PlantUML, rendu local ; export PDF incluant les diagrammes |
+| 19/10/2026 | Serveur MCP : écriture de documents en Markdown, impression/export PDF |
+| 28/09/2026 | Correctifs sur l'API et le réordonnancement de la barre latérale |
+| 25/09/2026 | Type de nœud `category`, nouveaux comportements de la barre latérale (glisser-déposer) |
+| 25/09/2026 | Package `@colanode/api` (API publique) et première version du serveur MCP |
+| 24/09/2026 | Clés API (compte et workspace), routes API, refonte visuelle de la barre latérale (rail d'espaces) |
 
-### Concurrent edits
+## Roadmap
 
-Colanode relies on **Conflict-free Replicated Data Types (CRDTs)** - powered by [Yjs](https://docs.yjs.dev/) - to allow real-time collaboration on entries like pages or database records. This means multiple people can edit at the same time, and the system gracefully merges everyone's updates. Deletions are also tracked as specialized transactions. Messages and file operations don't support concurrent edits and use simpler database tables.
+> Légende : ✅ fait · 🚧 en cours · ⏳ à faire
 
-## Get started for free
+| Statut | Fonctionnalité | Notes |
+| --- | --- | --- |
+| ✅ | Rail d'espaces façon Discord | |
+| ✅ | Catégories dans les espaces | |
+| ✅ | Bloc et outil PlantUML (rendu local) | |
+| ✅ | Export PDF / impression | |
+| ✅ | API publique + clés API | |
+| ✅ | Serveur MCP | |
+| ⏳ | Recherche globale dans le workspace (Ctrl/Cmd+K, index FTS5 local) | |
+| ⏳ | Centre de notifications (mentions) + notifications desktop | |
+| ⏳ | Badge non-lu par espace dans le rail | |
+| 🚧 | Images Docker Neo Colanode (server + web sur ghcr.io) et déploiement de production | `.github/workflows/docker-publish.yml`, `hosting/production/` |
+| ⏳ | | |
+| ⏳ | | |
 
-The easiest way to start using Colanode is through our **web app**, accessible instantly at [app.colanode.com](https://app.colanode.com). Simply log in to get started immediately, without any installation. _Please note, the web app is currently in early preview and under testing; you may encounter bugs or compatibility issues in certain browsers._
+## Comment ça marche
 
-For optimal performance, you can install our **desktop app**, available from our [downloads page](https://colanode.com/downloads). Both the web and desktop apps allow you to connect to any of our free beta cloud servers:
+Neo Colanode comprend une application cliente (web ou desktop) et un serveur auto-hébergé. Une même application peut se connecter à plusieurs serveurs, chacun contenant un ou plusieurs **workspaces**.
 
-- **Colanode Cloud (EU)** – hosted in Europe.
-- **Colanode Cloud (US)** – hosted in the United States.
+### Fonctionnement local-first
 
-Both cloud servers are currently available in beta and free to use; pricing details will be announced soon.
+Toutes les modifications sont d'abord enregistrées dans une base SQLite locale puis synchronisées avec le serveur par un processus en arrière-plan : vous pouvez continuer à travailler même si votre ordinateur ou le serveur est hors ligne. Les lectures sont aussi locales, donc immédiates.
 
-### Self-host
+### Éditions concurrentes
 
-If you prefer to host your own Colanode server, check out the [`hosting/`](hosting/) folder which contains the Docker Compose file and deployment configurations. For Kubernetes deployments, see the [`hosting/kubernetes/`](hosting/kubernetes/) folder which includes Helm charts and additional documentation. Here's what you need to run Colanode yourself:
+Neo Colanode s'appuie, comme Colanode, sur des **CRDT** (Conflict-free Replicated Data Types) via [Yjs](https://docs.yjs.dev/) pour la collaboration temps réel sur les pages et les enregistrements de bases de données. Les messages et les fichiers n'acceptent pas d'éditions concurrentes et utilisent des tables plus simples.
 
-- **Postgres** with the **pgvector** extension.
-- **Redis** (any Redis-compatible service will work, e.g., Valkey).
-- **Storage backend** for user files. Colanode defaults to local filesystem storage, but you can switch to **S3-compatible**, **Google Cloud Storage**, or **Azure Blob Storage** backends by setting `STORAGE_TYPE`.
-- **Colanode server API**, provided as a Docker image.
+## Auto-hébergement
 
-#### Configuration model
+> Les images Docker Neo Colanode (`ghcr.io/<owner>/colanode-server` et `colanode-web`) et la configuration de production (`hosting/production/`) sont en cours de mise en place. En attendant, pour profiter des fonctionnalités du fork, lancez le serveur depuis les sources (voir [Lancer en local](#lancer-en-local)). Dans `hosting/docker/docker-compose.yaml`, le service `server` (image upstream) est commenté : seules les dépendances (Postgres, Redis, serveur mail, MinIO en option) sont démarrées.
 
-- The server image now ships with a full `config.json`, so most defaults are ready to go without touching env vars.
-- The config file is the single source of truth. Use `env://VAR_NAME` to pull sensitive values from env vars, or `file://path/to/secret.pem` to inline the contents of a mounted file (append `?` to make either optional). Only `POSTGRES_URL` and `REDIS_URL` are required out of the box.
-- To customize settings:
-  1. Copy `apps/server/config.json`, edit it, and mount/bind it when using Docker Compose (see `hosting/docker/docker-compose.yaml`).
-  2. For Helm, enable `colanode.configFile.enabled` and pass your file via `--set-file colanode.configFile.data=./config.json` (details in [`hosting/kubernetes/README.md`](hosting/kubernetes/README.md)).
-  3. Keep secrets as env vars so you don't have to bake them into JSON; the loader resolves `env://` pointers at runtime.
+Le dossier [`hosting/`](hosting/) contient le fichier Docker Compose et les configurations de déploiement ; pour Kubernetes, voir [`hosting/kubernetes/`](hosting/kubernetes/) (charts Helm et documentation). Prérequis :
 
-Environment variables no longer override regular config fields—only values explicitly tagged with `env://` are read from the environment. Refer to [`hosting/docker/docker-compose.yaml`](hosting/docker/docker-compose.yaml) and [`hosting/kubernetes/README.md`](hosting/kubernetes/README.md) for mounting instructions and the handful of required secrets.
+- **Postgres** avec l'extension **pgvector** ;
+- **Redis** (ou tout service compatible, ex. Valkey) ;
+- un **stockage** pour les fichiers : système de fichiers local par défaut, ou **S3-compatible**, **Google Cloud Storage**, **Azure Blob Storage** ;
+- le **serveur API** (`apps/server`).
 
-### Running locally
+#### Configuration
 
-To run Colanode locally in development mode:
+- Le fichier `config.json` est la source de vérité. Utilisez `env://NOM_VAR` pour lire une valeur sensible depuis l'environnement, ou `file://chemin/secret.pem` pour inclure le contenu d'un fichier monté (ajoutez `?` pour les rendre optionnels). Seuls `POSTGRES_URL` et `REDIS_URL` sont requis.
+- Pour personnaliser :
+  1. copiez `apps/server/config.json`, modifiez-le et montez-le dans le conteneur (voir `hosting/docker/docker-compose.yaml`) ;
+  2. avec Helm, activez `colanode.configFile.enabled` et passez le fichier via `--set-file colanode.configFile.data=./config.json` (détails dans [`hosting/kubernetes/README.md`](hosting/kubernetes/README.md)) ;
+  3. gardez les secrets en variables d'environnement, résolues à l'exécution via `env://`.
 
-1. Clone the repository:
+Les variables d'environnement ne surchargent pas les champs de configuration classiques : seules les valeurs marquées `env://` sont lues depuis l'environnement.
+
+### Lancer en local
+
+1. Cloner le dépôt :
 
    ```bash
-   git clone https://github.com/colanode/colanode.git
+   git clone https://github.com/gambsantoine/colanode.git
    cd colanode
    ```
 
-2. Install dependencies at the project root:
+2. Installer les dépendances à la racine :
 
    ```bash
    npm install
    ```
 
-3. Start the apps you want to run locally:
-
-   **Server**
-
-   ```bash
-   cd apps/server
-
-   # Copy the environment variable template and adjust values as needed
-   cp .env.example .env
-
-   npm run dev
-   ```
-
-   To spin up the local dependencies (Postgres, Redis, and Mail server) with Docker Compose—using filesystem storage
-   by default—run this from
-   the project root:
+3. Démarrer les dépendances (Postgres, Redis, serveur mail) depuis la racine, avec stockage fichiers par défaut :
 
    ```bash
    docker compose -f hosting/docker/docker-compose.yaml up -d
-   ```
-
-   When you prefer an S3-compatible backend locally, enable the optional MinIO service with the `s3` profile:
-
-   ```bash
+   # ou, avec MinIO pour un stockage S3 :
    docker compose -f hosting/docker/docker-compose.yaml --profile s3 up -d
    ```
 
-   The compose file includes a `server` service. When you want to run the API locally with `npm run dev`, comment
-   out (or override) that service so only the supporting services are started.
+4. Lancer les applications voulues :
+
+   **Serveur**
+
+   ```bash
+   cd apps/server
+   cp .env.example .env   # à adapter
+   npm run dev
+   ```
 
    **Web**
 
@@ -133,28 +147,45 @@ To run Colanode locally in development mode:
    npm run dev
    ```
 
-## Testing
-
-Colanode includes tests for both server and web.
-
-### Server tests
-
-From `apps/server`:
+### Serveur MCP
 
 ```bash
-npm run test
+cd apps/mcp
+npm run build
 ```
 
-Server tests use Testcontainers for Postgres and Redis, so Docker must be running. See [`apps/server/README.md`](apps/server/README.md) for details.
+Créez une clé API dans l'application (paramètres du compte ou du workspace), puis déclarez le serveur dans votre client MCP :
 
-### Web tests
-
-From `apps/web`:
-
-```bash
-npm run test
+```json
+{
+  "mcpServers": {
+    "colanode": {
+      "command": "node",
+      "args": ["/chemin/vers/colanode/apps/mcp/dist/index.js"],
+      "env": {
+        "COLANODE_URL": "http://localhost:3000",
+        "COLANODE_API_KEY": "<votre clé API>"
+      }
+    }
+  }
+}
 ```
 
-## License
+## Tests
 
-Colanode is released under the [Apache 2.0 License](LICENSE).
+Les tests utilisent Vitest. Lancez `npm run test` dans le dossier concerné :
+
+| Dossier | Remarque |
+| --- | --- |
+| `apps/server` | Testcontainers (Postgres, Redis) : Docker doit tourner. Voir [`apps/server/README.md`](apps/server/README.md). |
+| `apps/web` | |
+| `packages/api` | |
+| `apps/mcp` | Conversion Markdown ⇄ document |
+
+`npm run test` à la racine lance les suites via Turbo.
+
+## Crédits & licence
+
+Neo Colanode est un fork de [Colanode](https://github.com/colanode/colanode), créé par l'équipe Colanode. Merci à eux pour le projet d'origine.
+
+Neo Colanode, comme Colanode, est distribué sous [licence Apache 2.0](LICENSE).
