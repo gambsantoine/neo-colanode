@@ -19,6 +19,7 @@ export const EditorNodeTypes = {
   TableHeader: 'tableHeader',
   TableCell: 'tableCell',
   TableRow: 'tableRow',
+  PlantUml: 'plantuml',
 };
 
 export type SortDirection = 'asc' | 'desc';

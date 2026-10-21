@@ -88,3 +88,29 @@ export const openFileDialog = (
 export const canPreviewFile = (subtype: FileSubtype) => {
   return subtype === 'image' || subtype === 'video' || subtype === 'audio';
 };
+
+// Stores `file` as a temporary file then creates a file node from it under
+// `parentId`. Returns the id of the created file node.
+export const createFileNode = async (
+  userId: string,
+  parentId: string,
+  file: File
+): Promise<string> => {
+  const tempFile = await window.colanode.saveTempFile(file);
+  const result = await window.colanode.executeMutation({
+    type: 'file.create',
+    userId,
+    parentId,
+    tempFileId: tempFile.id,
+  });
+
+  if (!result.success) {
+    throw new Error(result.error.message);
+  }
+
+  if (!result.output.id) {
+    throw new Error('The file could not be created.');
+  }
+
+  return result.output.id;
+};

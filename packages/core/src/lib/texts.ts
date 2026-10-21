@@ -34,6 +34,10 @@ const collectBlockText = (
         }
       }
     }
+    // PlantUML blocks keep their source in attrs, index it for search.
+    if (block.type === 'plantuml' && typeof block.attrs?.code === 'string') {
+      text += block.attrs.code;
+    }
     texts.push(text);
   }
 

@@ -7,6 +7,12 @@ interface SaveDialogOptions {
   name: string;
 }
 
+export type ExportToPdfResult =
+  | { status: 'saved'; filePath: string }
+  | { status: 'print-dialog' }
+  | { status: 'cancelled' }
+  | { status: 'failed'; error?: string };
+
 export interface ColanodeWindowApi {
   init: () => Promise<AppInitOutput>;
   reset: () => Promise<void>;
@@ -27,6 +33,10 @@ export interface ColanodeWindowApi {
   showFileSaveDialog: (
     options: SaveDialogOptions
   ) => Promise<string | undefined>;
+  exportToPdf: (options: {
+    html: string;
+    fileName: string;
+  }) => Promise<ExportToPdfResult>;
 }
 
 declare global {

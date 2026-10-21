@@ -64,6 +64,16 @@ contextBridge.exposeInMainWorld('colanode', {
   showFileSaveDialog: async ({ name }: { name: string }) => {
     return ipcRenderer.invoke('show-file-save-dialog', { name });
   },
+
+  exportToPdf: async ({
+    html,
+    fileName,
+  }: {
+    html: string;
+    fileName: string;
+  }) => {
+    return ipcRenderer.invoke('export-to-pdf', { html, fileName });
+  },
 });
 
 contextBridge.exposeInMainWorld('eventBus', {

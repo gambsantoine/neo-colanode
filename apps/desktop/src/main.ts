@@ -194,7 +194,10 @@ const initApp = async (): Promise<AppInitOutput> => {
 };
 
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'local', privileges: { standard: true, stream: true } },
+  {
+    scheme: 'local',
+    privileges: { standard: true, stream: true, supportFetchAPI: true },
+  },
 ]);
 
 // This method will be called when Electron has finished
@@ -366,5 +369,78 @@ ipcMain.handle(
     }
 
     return result.filePath;
+  }
+);
+
+const sanitizePdfFileName = (name: string): string => {
+  const base = (name ?? '')
+    .replace(/\.pdf$/i, '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[/\\:*?"<>|\x00-\x1f\x7f]/g, '_')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\s.]+|[\s.]+$/g, '')
+    .slice(0, 100)
+    .replace(/[\s.]+$/g, '');
+
+  return `${base || 'document'}.pdf`;
+};
+
+ipcMain.handle(
+  'export-to-pdf',
+  async (
+    _,
+    { html, fileName }: { html: string; fileName: string }
+  ): Promise<
+    | { status: 'saved'; filePath: string }
+    | { status: 'cancelled' }
+    | { status: 'failed'; error?: string }
+  > => {
+    let pdfWindow: BrowserWindow | null = null;
+
+    try {
+      const saveResult = await dialog.showSaveDialog({
+        defaultPath: path.join(
+          electronApp.getPath('documents'),
+          sanitizePdfFileName(fileName)
+        ),
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+      });
+
+      if (saveResult.canceled || !saveResult.filePath) {
+        return { status: 'cancelled' };
+      }
+
+      pdfWindow = new BrowserWindow({
+        show: false,
+        webPreferences: {
+          javascript: false,
+          sandbox: true,
+          contextIsolation: true,
+          nodeIntegration: false,
+        },
+      });
+
+      await pdfWindow.loadURL(
+        `data:text/html;charset=utf-8;base64,${Buffer.from(html, 'utf-8').toString('base64')}`
+      );
+
+      const pdfBuffer = await pdfWindow.webContents.printToPDF({
+        printBackground: true,
+        pageSize: 'A4',
+      });
+
+      await fs.promises.writeFile(saveResult.filePath, pdfBuffer);
+
+      return { status: 'saved', filePath: saveResult.filePath };
+    } catch (error) {
+      return {
+        status: 'failed',
+        error: error instanceof Error ? error.message : String(error),
+      };
+    } finally {
+      if (pdfWindow && !pdfWindow.isDestroyed()) {
+        pdfWindow.destroy();
+      }
+    }
   }
 );
