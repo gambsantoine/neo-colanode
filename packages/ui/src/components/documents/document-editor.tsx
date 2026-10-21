@@ -37,6 +37,7 @@ import {
   OrderedListCommand,
   PageCommand,
   ParagraphCommand,
+  PlantUmlCommand,
   TableCommand,
   TodoCommand,
   DatabaseCommand,
@@ -69,6 +70,7 @@ import {
   PageNode,
   ParagraphNode,
   PlaceholderExtension,
+  PlantUmlNode,
   StrikethroughMark,
   TabKeymapExtension,
   TableNode,
@@ -87,6 +89,7 @@ import {
   Markdown,
 } from '@colanode/ui/editor/extensions';
 import { ToolbarMenu, ActionMenu } from '@colanode/ui/editor/menus';
+import { DocumentActionsBar } from '@colanode/ui/components/documents/document-actions-bar';
 
 interface DocumentEditorProps {
   node: LocalNode;
@@ -288,6 +291,7 @@ export const DocumentEditor = ({
         TableCellNode,
         TableHeaderNode,
         DividerNode,
+        PlantUmlNode,
         TrailingNode,
         LinkMark,
         DeleteControlExtension,
@@ -309,6 +313,7 @@ export const DocumentEditor = ({
             DatabaseInlineCommand,
             DatabaseCommand,
             DividerCommand,
+            PlantUmlCommand,
             TodoCommand,
             FileCommand,
             FolderCommand,
@@ -441,6 +446,7 @@ export const DocumentEditor = ({
           <ActionMenu editor={editor} />
         </Fragment>
       )}
+      {editor && <DocumentActionsBar editor={editor} node={node} />}
       <EditorContent editor={editor} />
     </>
   );

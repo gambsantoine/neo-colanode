@@ -1,5 +1,5 @@
 import { Fullscreen } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import { SidebarMobile } from '@colanode/ui/components/layouts/sidebars/sidebar-mobile';
 import {
@@ -35,6 +35,7 @@ export const Container = ({
 
   const scrollAreaRef = useRef<HTMLDivElement>(null!);
   const scrollViewportRef = useRef<HTMLDivElement>(null!);
+  const [actionsSlot, setActionsSlot] = useState<HTMLDivElement | null>(null);
 
   return (
     <ContainerContext.Provider
@@ -42,6 +43,7 @@ export const Container = ({
         type,
         scrollAreaRef,
         scrollViewportRef,
+        actionsSlot,
       }}
     >
       <div className="flex h-full flex-col">
@@ -60,7 +62,10 @@ export const Container = ({
           )}
           <div className="flex-1 flex justify-between items-center">
             <div>{type === 'full' ? breadcrumb : null}</div>
-            <div>{actions}</div>
+            <div className="flex items-center gap-3">
+              <div ref={setActionsSlot} className="flex items-center gap-3" />
+              {actions}
+            </div>
           </div>
         </div>
         <ScrollArea ref={scrollAreaRef} className="overflow-hidden h-full">

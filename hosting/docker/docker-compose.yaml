@@ -76,15 +76,15 @@ services:
   #  networks:
   #    - colanode_network
 
-  server:
-    image: ghcr.io/colanode/server:latest
-    container_name: colanode_server
-    restart: always
-    depends_on:
-      - postgres
-      - valkey
+#  server:
+#    image: ghcr.io/colanode/server:latest
+#    container_name: colanode_server
+#    restart: always
+#    depends_on:
+#      - postgres
+#      - valkey
       # - smtp # Optional
-    environment:
+#    environment:
       # ------------------------------------------------------------------
       # Configuration Strategy
       # ------------------------------------------------------------------
@@ -93,33 +93,33 @@ services:
       # - The variables below are only those secrets; every other setting
       #   must be changed inside the JSON file
       # ------------------------------------------------------------------
-      NODE_ENV: production
+#      NODE_ENV: production
 
       # Required env:// secrets (default configuration references these as env://VAR)
-      POSTGRES_URL: postgres://colanode_user:postgrespass123@postgres:5432/colanode_db
-      REDIS_URL: redis://:your_valkey_password@valkey:6379/0
+#      POSTGRES_URL: postgres://colanode_user:postgrespass123@postgres:5432/colanode_db
+#      REDIS_URL: redis://:your_valkey_password@valkey:6379/0
 
       # If you want to override the default configuration mount a config.json as explained below
       # and add the config.json path as an environment variable:
       # CONFIG: /config.json
 
-    ports:
-      - '3000:3000'
-    volumes:
-      - server_storage:/var/lib/colanode/storage
+#    ports:
+#      - '3000:3000'
+#    volumes:
+#      - server_storage:/var/lib/colanode/storage
       # Mount a config.json sitting next to this compose file to override defaults.
       # - ./config.json:/config.json:ro
-    networks:
-      - colanode_network
+#    networks:
+#      - colanode_network
 
-  web:
-    image: ghcr.io/colanode/web:latest
-    container_name: colanode_web
-    restart: always
-    ports:
-      - '4000:80'
-    networks:
-      - colanode_network
+#  web:
+#    image: ghcr.io/colanode/web:latest
+#    container_name: colanode_web
+#    restart: always
+#    ports:
+#      - '4000:80'
+#    networks:
+#      - colanode_network
 
 volumes:
   postgres_data:

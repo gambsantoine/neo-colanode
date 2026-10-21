@@ -72,7 +72,7 @@ export const SidebarMenuHeader = () => {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="min-w-80 rounded-lg"
+        className="w-80 max-w-[calc(100vw-2rem)] rounded-lg"
         align="start"
         side="right"
         sideOffset={4}
@@ -95,18 +95,18 @@ export const SidebarMenuHeader = () => {
                 });
               }}
             >
-              <div className="w-full flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+              <div className="w-full min-w-0 flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar
-                  className="h-8 w-8 rounded-lg"
+                  className="h-8 w-8 rounded-lg shrink-0"
                   id={workspaceItem.workspaceId}
                   name={workspaceItem.name}
                   avatar={workspaceItem.avatar}
                 />
-                <p className="flex-1 text-left text-sm leading-tight truncate font-normal">
+                <p className="flex-1 min-w-0 text-left text-sm leading-tight truncate font-normal">
                   {workspaceItem.name}
                 </p>
                 {workspaceItem.userId === workspace.userId ? (
-                  <Check className="size-4" />
+                  <Check className="size-4 shrink-0" />
                 ) : (
                   <UnreadBadge
                     count={workspaceUnreadState.state.unreadCount}

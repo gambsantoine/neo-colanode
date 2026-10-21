@@ -13,6 +13,7 @@ import { Heading3Command } from '@colanode/ui/editor/commands/heading3';
 import { OrderedListCommand } from '@colanode/ui/editor/commands/ordered-list';
 import { PageCommand } from '@colanode/ui/editor/commands/page';
 import { ParagraphCommand } from '@colanode/ui/editor/commands/paragraph';
+import { PlantUmlCommand } from '@colanode/ui/editor/commands/plantuml';
 import { TableCommand } from '@colanode/ui/editor/commands/table';
 import { TodoCommand } from '@colanode/ui/editor/commands/todo';
 
@@ -31,6 +32,7 @@ export {
   OrderedListCommand,
   PageCommand,
   ParagraphCommand,
+  PlantUmlCommand,
   TableCommand,
   TodoCommand,
   DatabaseCommand,

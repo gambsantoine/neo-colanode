@@ -133,6 +133,10 @@ window.colanode = {
     // No-op on web
   },
   showFileSaveDialog: async () => undefined,
+  exportToPdf: async () => ({
+    status: 'failed',
+    error: 'PDF export is not supported on mobile',
+  }),
 };
 
 const handleMessage = (message: Message) => {

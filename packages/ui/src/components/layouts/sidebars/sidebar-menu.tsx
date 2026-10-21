@@ -1,5 +1,5 @@
 import { count, eq, inArray, useLiveQuery } from '@tanstack/react-db';
-import { MessageCircle, Plus, Settings } from 'lucide-react';
+import { MessageCircle, Plus, Settings, Wrench } from 'lucide-react';
 import { useCallback, useState } from 'react';
 
 import {
@@ -107,9 +107,16 @@ export const SidebarMenu = ({
             maxCount: 99,
           }}
         />
+        <SidebarMenuIcon
+          icon={Wrench}
+          onClick={() => {
+            onChange('tools');
+          }}
+          isActive={value === 'tools'}
+        />
       </div>
       <Separator className="w-8" />
-      <div className="flex flex-col gap-1 mt-2 w-full px-2 items-center grow overflow-y-auto">
+      <div className="flex flex-col gap-1 mt-2 w-full px-2 items-center grow overflow-y-auto overflow-x-hidden">
         {spaces.map((space, index) => (
           <SidebarSpaceIcon
             key={space.id}

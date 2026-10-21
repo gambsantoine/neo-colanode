@@ -1,0 +1,14 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$WEB_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:80
+}
+
+{$SERVER_DOMAIN} {
+	encode zstd gzip
+	# WebSocket upgrades are proxied transparently by Caddy.
+	reverse_proxy server:3000
+}

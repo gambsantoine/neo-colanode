@@ -6,6 +6,7 @@ import { SidebarChats } from '@colanode/ui/components/layouts/sidebars/sidebar-c
 import { SidebarMenu } from '@colanode/ui/components/layouts/sidebars/sidebar-menu';
 import { SidebarSettings } from '@colanode/ui/components/layouts/sidebars/sidebar-settings';
 import { SidebarSpaces } from '@colanode/ui/components/layouts/sidebars/sidebar-spaces';
+import { SidebarTools } from '@colanode/ui/components/layouts/sidebars/sidebar-tools';
 import { useApp } from '@colanode/ui/contexts/app';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { useMetadata } from '@colanode/ui/hooks/use-metadata';
@@ -59,6 +60,7 @@ export const Sidebar = () => {
       <div className="min-h-0 grow overflow-auto border-l border-sidebar-border">
         {menu === 'spaces' && <SidebarSpaces activeSpaceId={activeSpaceId} />}
         {menu === 'chats' && <SidebarChats />}
+        {menu === 'tools' && <SidebarTools />}
         {menu === 'settings' && <SidebarSettings />}
       </div>
     </div>
