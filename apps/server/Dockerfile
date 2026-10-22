@@ -10,6 +10,7 @@ COPY ../../scripts scripts
 
 # Copy all package.json files first
 COPY ../../packages/core/package.json packages/core/package.json
+COPY ../../packages/api/package.json packages/api/package.json
 COPY ../../packages/crdt/package.json packages/crdt/package.json
 COPY ../../apps/server/package.json apps/server/package.json
 
@@ -18,12 +19,14 @@ RUN npm ci
 
 # Copy source files
 COPY ../../packages/core packages/core
+COPY ../../packages/api packages/api
 COPY ../../packages/crdt packages/crdt
 COPY ../../apps/server apps/server
 COPY ../../tsconfig.base.json ./
 
 # Build packages
 RUN npm run build -w @colanode/core && \
+    npm run build -w @colanode/api && \
     npm run build -w @colanode/crdt && \
     npm run build -w @colanode/server && \
     npm prune --production
