@@ -3,17 +3,13 @@ name: Docker - Build and publish images
 # Builds the server and web images and publishes them to GitHub Container
 # Registry (ghcr.io/<owner>/colanode-server and ghcr.io/<owner>/colanode-web).
 #
-# Tags produced:
-#   - push on main      -> edge, sha-<short sha>
-#   - push of tag vX.Y.Z -> X.Y.Z, X.Y, X, latest, sha-<short sha>
-#   - manual dispatch    -> sha-<short sha> (+ edge when run on main)
+# Only runs when a version tag vX.Y.Z is pushed.
+# Tags produced: X.Y.Z, X.Y, X, latest, sha-<short sha>
 
 on:
   push:
-    branches: [main]
     tags:
       - 'v*'
-  workflow_dispatch:
 
 concurrency:
   group: docker-publish-${{ github.ref }}
@@ -56,12 +52,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Compute version
-        run: |
-          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
-            echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-          else
-            echo "VERSION=edge-${GITHUB_SHA::7}" >> $GITHUB_ENV
-          fi
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: Set version and commit SHA into build.ts
         run: |
@@ -82,13 +73,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/colanode-${{ matrix.app }}
           tags: |
-            type=edge,branch=main
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha,prefix=sha-
           flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/v') }}
+            latest=true
 
       - name: Build and push Colanode ${{ matrix.app }} image
         uses: docker/build-push-action@v6

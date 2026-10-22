@@ -1,16 +1,18 @@
 name: PR - Server and Web tests
 
 on:
-  pull_request:
-    branches:
-      - main
+  # Disabled for now to save CI minutes - uncomment to run on every PR.
+  # pull_request:
+  #   branches:
+  #     - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 # Cancel older runs for the same PR so only the latest commit is tested.
 concurrency:
-  group: pr-tests-${{ github.event.pull_request.number }}
+  group: pr-tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
