@@ -21,6 +21,8 @@ interface ContainerProps {
   breadcrumb?: React.ReactNode;
   actions?: React.ReactNode;
   onFullscreen?: () => void;
+  // Content fills the page edge to edge (no side padding), e.g. tools.
+  flush?: boolean;
 }
 
 export const Container = ({
@@ -29,6 +31,7 @@ export const Container = ({
   breadcrumb,
   actions,
   onFullscreen,
+  flush = false,
 }: ContainerProps) => {
   const app = useApp();
   const isMobile = useIsMobile();
@@ -49,7 +52,8 @@ export const Container = ({
       <div className="flex h-full flex-col">
         <div
           className={cn(
-            'sticky top-0 z-20 flex flex-row w-full items-center gap-2 p-3 h-10 mb-2 shrink-0 bg-background/80 backdrop-blur',
+            'sticky top-0 z-20 flex flex-row w-full items-center gap-2 p-3 h-10 shrink-0 bg-background/80 backdrop-blur',
+            !flush && 'mb-2',
             app.type === 'mobile' && 'p-0 pr-2'
           )}
         >
@@ -70,7 +74,12 @@ export const Container = ({
         </div>
         <ScrollArea ref={scrollAreaRef} className="overflow-hidden h-full">
           <ScrollViewport ref={scrollViewportRef} className="h-full">
-            <div className="lg:px-10 px-4 min-h-0 flex-1 h-full">
+            <div
+              className={cn(
+                'min-h-0 flex-1 h-full',
+                !flush && 'lg:px-10 px-4'
+              )}
+            >
               {children}
             </div>
           </ScrollViewport>

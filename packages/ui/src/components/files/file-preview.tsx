@@ -4,10 +4,12 @@ import { FileDownloadProgress } from '@colanode/ui/components/files/file-downloa
 import { FileNoPreview } from '@colanode/ui/components/files/file-no-preview';
 import { FileNotUploaded } from '@colanode/ui/components/files/file-not-uploaded';
 import { FilePreviewAudio } from '@colanode/ui/components/files/previews/file-preview-audio';
+import { FilePreviewDiagram } from '@colanode/ui/components/files/previews/file-preview-diagram';
 import { FilePreviewImage } from '@colanode/ui/components/files/previews/file-preview-image';
 import { FilePreviewVideo } from '@colanode/ui/components/files/previews/file-preview-video';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { useLiveQuery } from '@colanode/ui/hooks/use-live-query';
+import { getDiagramLanguageForFile } from '@colanode/ui/lib/diagram-languages';
 
 interface FilePreviewProps {
   file: LocalFileNode;
@@ -42,6 +44,17 @@ export const FilePreview = ({ file }: FilePreviewProps) => {
   }
 
   if (localFile.downloadStatus === DownloadStatus.Completed && localFile.url) {
+    const diagramLanguage = getDiagramLanguageForFile(file.name);
+    if (diagramLanguage) {
+      return (
+        <FilePreviewDiagram
+          language={diagramLanguage}
+          fileId={file.id}
+          url={localFile.url}
+        />
+      );
+    }
+
     if (file.subtype === 'image') {
       return <FilePreviewImage url={localFile.url} name={file.name} />;
     }

@@ -5,7 +5,8 @@ import {
   Node as ProseMirrorNode,
 } from '@tiptap/pm/model';
 
-import { renderPlantUml, svgToDataUrl } from '@colanode/ui/lib/plantuml';
+import { renderPlantUml } from '@colanode/ui/lib/plantuml';
+import { svgToDataUrl } from '@colanode/ui/lib/svg';
 
 const PDF_CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
