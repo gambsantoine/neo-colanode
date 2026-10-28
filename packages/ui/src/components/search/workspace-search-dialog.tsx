@@ -12,6 +12,7 @@ import {
   CommandItem,
   CommandList,
 } from '@colanode/ui/components/ui/command';
+import { useLayout } from '@colanode/ui/contexts/layout';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { useQuery } from '@colanode/ui/hooks/use-query';
 import { getSearchResultTarget, splitSearchSnippet } from '@colanode/ui/lib/search';
@@ -28,6 +29,7 @@ export const WorkspaceSearchDialog = ({
   onOpenChange,
 }: WorkspaceSearchDialogProps) => {
   const workspace = useWorkspace();
+  const layout = useLayout();
   const navigate = useNavigate({ from: '/workspace/$userId' });
 
   const [query, setQuery] = useState('');
@@ -67,6 +69,12 @@ export const WorkspaceSearchDialog = ({
   const openResult = (result: WorkspaceSearchResult) => {
     const nodeId = getSearchResultTarget(result.node);
     handleOpenChange(false);
+
+    if (layout.openInTab) {
+      layout.openInTab(`/workspace/${workspace.userId}/${nodeId}`);
+      return;
+    }
+
     navigate({ to: '$nodeId', params: { nodeId } });
   };
 
