@@ -75,6 +75,11 @@ export const deleteNodeRelations = async (
   await database.deleteFrom('node_texts').where('id', '=', nodeId).execute();
 
   await database
+    .deleteFrom('document_texts')
+    .where('id', '=', nodeId)
+    .execute();
+
+  await database
     .deleteFrom('documents')
     .where('id', '=', nodeId)
     .executeTakeFirst();

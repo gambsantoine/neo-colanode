@@ -31,6 +31,7 @@ import { NodeListQueryHandler } from './nodes/node-list';
 import { NodeReactionsListQueryHandler } from './nodes/node-reaction-list';
 import { RecordFieldValueCountQueryHandler } from './records/record-field-value-count';
 import { RecordSearchQueryHandler } from './records/record-search';
+import { WorkspaceSearchQueryHandler } from './search/workspace-search';
 import { ServerListQueryHandler } from './servers/server-list';
 import { UserListQueryHandler } from './users/user-list';
 import { UserSearchQueryHandler } from './users/user-search';
@@ -63,6 +64,7 @@ export const buildQueryHandlerMap = (app: AppService): QueryHandlerMap => {
     'icon.category.list': new IconCategoryListQueryHandler(app),
     'radar.data.get': new RadarDataGetQueryHandler(app),
     'record.search': new RecordSearchQueryHandler(app),
+    'workspace.search': new WorkspaceSearchQueryHandler(app),
     'local.file.get': new LocalFileGetQueryHandler(app),
     'file.download.request.get': new FileDownloadRequestGetQueryHandler(app),
     'document.get': new DocumentGetQueryHandler(app),

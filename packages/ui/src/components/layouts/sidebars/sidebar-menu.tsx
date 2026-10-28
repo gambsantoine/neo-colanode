@@ -1,6 +1,6 @@
 import { count, eq, inArray, useLiveQuery } from '@tanstack/react-db';
-import { MessageCircle, Plus, Settings, Wrench } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { MessageCircle, Plus, Search, Settings, Wrench } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 import {
   LocalSpaceNode,
@@ -11,6 +11,7 @@ import { SidebarMenuFooter } from '@colanode/ui/components/layouts/sidebars/side
 import { SidebarMenuHeader } from '@colanode/ui/components/layouts/sidebars/sidebar-menu-header';
 import { SidebarMenuIcon } from '@colanode/ui/components/layouts/sidebars/sidebar-menu-icon';
 import { SidebarSpaceIcon } from '@colanode/ui/components/layouts/sidebars/sidebar-space-icon';
+import { WorkspaceSearchDialog } from '@colanode/ui/components/search/workspace-search-dialog';
 import { SpaceCreateDialog } from '@colanode/ui/components/spaces/space-create-dialog';
 import { Separator } from '@colanode/ui/components/ui/separator';
 import { useRadar } from '@colanode/ui/contexts/radar';
@@ -34,6 +35,24 @@ export const SidebarMenu = ({
   const workspace = useWorkspace();
   const radar = useRadar();
   const [openCreateSpace, setOpenCreateSpace] = useState(false);
+  const [openSearch, setOpenSearch] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        (event.metaKey || event.ctrlKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        event.key.toLowerCase() === 'k'
+      ) {
+        event.preventDefault();
+        setOpenSearch((open) => !open);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const chatsState = radar.getChatsState(workspace.userId);
 
@@ -96,6 +115,11 @@ export const SidebarMenu = ({
       <SidebarMenuHeader />
       <div className="flex flex-col gap-1 mt-2 w-full p-2 items-center">
         <SidebarMenuIcon
+          icon={Search}
+          onClick={() => setOpenSearch(true)}
+          isActive={openSearch}
+        />
+        <SidebarMenuIcon
           icon={MessageCircle}
           onClick={() => {
             onChange('chats');
@@ -154,6 +178,7 @@ export const SidebarMenu = ({
         }}
       />
       <SidebarMenuFooter />
+      <WorkspaceSearchDialog open={openSearch} onOpenChange={setOpenSearch} />
       {openCreateSpace && (
         <SpaceCreateDialog
           open={openCreateSpace}
