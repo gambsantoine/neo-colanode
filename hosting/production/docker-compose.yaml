@@ -68,6 +68,9 @@ services:
   web:
     image: ${COLANODE_REGISTRY:-ghcr.io/gambsantoine}/colanode-web:${COLANODE_VERSION:-latest}
     restart: unless-stopped
+    environment:
+      # Server pre-registered in the web app on first load.
+      COLANODE_SERVER_URL: https://${SERVER_DOMAIN}/config
     networks:
       - frontend
 
