@@ -99,6 +99,54 @@ export const workspaceToolsPlantUmlRouteMask = createRouteMask({
   },
 });
 
+export const workspaceToolsMermaidRouteMask = createRouteMask({
+  routeTree: routeTree,
+  from: '/workspace/$userId/tools/mermaid',
+  to: '/$workspaceId/tools/mermaid',
+  params: (ctx) => {
+    const workspace = collections.workspaces.get(ctx.userId);
+    return {
+      workspaceId: workspace?.workspaceId ?? 'unknown',
+    };
+  },
+});
+
+export const workspaceToolsJsonRouteMask = createRouteMask({
+  routeTree: routeTree,
+  from: '/workspace/$userId/tools/json',
+  to: '/$workspaceId/tools/json',
+  params: (ctx) => {
+    const workspace = collections.workspaces.get(ctx.userId);
+    return {
+      workspaceId: workspace?.workspaceId ?? 'unknown',
+    };
+  },
+});
+
+export const workspaceToolsQrCodeRouteMask = createRouteMask({
+  routeTree: routeTree,
+  from: '/workspace/$userId/tools/qrcode',
+  to: '/$workspaceId/tools/qrcode',
+  params: (ctx) => {
+    const workspace = collections.workspaces.get(ctx.userId);
+    return {
+      workspaceId: workspace?.workspaceId ?? 'unknown',
+    };
+  },
+});
+
+export const workspaceToolsPasswordRouteMask = createRouteMask({
+  routeTree: routeTree,
+  from: '/workspace/$userId/tools/password',
+  to: '/$workspaceId/tools/password',
+  params: (ctx) => {
+    const workspace = collections.workspaces.get(ctx.userId);
+    return {
+      workspaceId: workspace?.workspaceId ?? 'unknown',
+    };
+  },
+});
+
 export const accountSettingsRouteMask = createRouteMask({
   routeTree: routeTree,
   from: '/workspace/$userId/account',
@@ -170,6 +218,10 @@ export const routeMasks = [
   workspaceUploadsRouteMask,
   workspaceDownloadsRouteMask,
   workspaceToolsPlantUmlRouteMask,
+  workspaceToolsMermaidRouteMask,
+  workspaceToolsJsonRouteMask,
+  workspaceToolsQrCodeRouteMask,
+  workspaceToolsPasswordRouteMask,
   accountSettingsRouteMask,
   accountLogoutRouteMask,
   appAppearanceRouteMask,

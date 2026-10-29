@@ -147,7 +147,12 @@ export const ActionMenu = ({ editor }: ActionMenuProps) => {
   }
 
   return (
-    <FloatingPortal>
+    // Rendered inside the editor's tab (when tabbed) so it is hidden with it.
+    <FloatingPortal
+      root={
+        editor.view.dom.closest<HTMLElement>('[data-tab-content]') ?? undefined
+      }
+    >
       <div
         ref={refs.setFloating}
         style={{ ...floatingStyles, zIndex: 50 }}

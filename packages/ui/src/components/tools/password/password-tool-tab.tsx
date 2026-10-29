@@ -1,8 +1,8 @@
 import { TabItem } from '@colanode/ui/components/layouts/tabs/tab-item';
 import { defaultIcons } from '@colanode/ui/lib/assets';
 
-export const PlantUmlToolTab = () => {
+export const PasswordToolTab = () => {
   return (
-    <TabItem id="tools-plantuml" avatar={defaultIcons.apps} name="PlantUML" />
+    <TabItem id="tools-password" avatar={defaultIcons.apps} name="Passwords" />
   );
 };

@@ -84,6 +84,10 @@ navigator.locks.request('colanode', async () => {
     await app.createServer(new URL('https://us.colanode.com/config'));
   }
 
+  for (const url of await fetchDefaultServers()) {
+    await app.createServer(url);
+  }
+
   appInitOutput = 'success';
 
   broadcastMessage({
@@ -128,6 +132,35 @@ navigator.locks.request('colanode', async () => {
 
   await new Promise(() => {});
 });
+
+// servers.json is generated at container start from COLANODE_SERVER_URL
+// (see apps/web/Dockerfile). Missing or invalid file means no default server.
+const fetchDefaultServers = async (): Promise<URL[]> => {
+  try {
+    const response = await fetch('/servers.json', { cache: 'no-store' });
+    if (!response.ok) {
+      return [];
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data?.servers)) {
+      return [];
+    }
+
+    const urls: URL[] = [];
+    for (const url of data.servers) {
+      try {
+        urls.push(new URL(url));
+      } catch {
+        // ignore invalid entries
+      }
+    }
+
+    return urls;
+  } catch {
+    return [];
+  }
+};
 
 const broadcastMessage = (message: BroadcastMessage) => {
   broadcast.postMessage(message);

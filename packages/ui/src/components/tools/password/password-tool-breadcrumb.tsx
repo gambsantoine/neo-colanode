@@ -1,12 +1,12 @@
 import { BreadcrumbItem } from '@colanode/ui/components/layouts/containers/breadcrumb-item';
 import { defaultIcons } from '@colanode/ui/lib/assets';
 
-export const PlantUmlToolBreadcrumb = () => {
+export const PasswordToolBreadcrumb = () => {
   return (
     <BreadcrumbItem
-      id="tools-plantuml"
+      id="tools-password"
       avatar={defaultIcons.apps}
-      name="PlantUML editor"
+      name="Password generator"
     />
   );
 };

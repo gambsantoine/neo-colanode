@@ -10,6 +10,8 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from '@colanode/ui/components/ui/context-menu';
+import { useLayout } from '@colanode/ui/contexts/layout';
+import { useWorkspace } from '@colanode/ui/contexts/workspace';
 
 interface FileContextMenuProps {
   id: string;
@@ -18,6 +20,8 @@ interface FileContextMenuProps {
 
 export const FileContextMenu = ({ id, children }: FileContextMenuProps) => {
   const navigate = useNavigate();
+  const layout = useLayout();
+  const workspace = useWorkspace();
   const [openDelete, setOpenDelete] = useState(false);
 
   return (
@@ -27,6 +31,13 @@ export const FileContextMenu = ({ id, children }: FileContextMenuProps) => {
         <ContextMenuContent className="w-64">
           <ContextMenuItem
             onSelect={() => {
+              if (layout.openInTab) {
+                layout.openInTab(`/workspace/${workspace.userId}/${id}`, {
+                  pin: true,
+                });
+                return;
+              }
+
               navigate({
                 from: '/workspace/$userId',
                 to: '$nodeId',
