@@ -139,8 +139,8 @@ export class AppService {
     await this.jobs.init();
     await this.initJobSchedules();
 
-    // make sure there is at least one tab in desktop app
-    if (this.meta.type === 'desktop') {
+    // make sure there is at least one tab in the desktop and web apps
+    if (this.meta.type === 'desktop' || this.meta.type === 'web') {
       const tabs = await this.database.selectFrom('tabs').selectAll().execute();
       if (tabs.length === 0) {
         await this.database

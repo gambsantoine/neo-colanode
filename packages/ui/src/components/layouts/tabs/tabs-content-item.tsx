@@ -15,6 +15,7 @@ export const TabsContentItem = ({ id, isActive }: TabsContentItemProps) => {
 
   return (
     <div
+      data-tab-content
       className={cn(
         'absolute inset-0 transition-opacity duration-200',
         isActive ? 'opacity-100 z-10' : 'opacity-0 z-0'

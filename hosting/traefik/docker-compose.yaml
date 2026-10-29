@@ -1,0 +1,106 @@
+# Colanode - stack derriere un Traefik existant
+#
+#   cp env.example .env    # puis modifier chaque valeur CHANGE_ME
+#   docker compose up -d
+#
+# Traefik tourne dans son propre projet compose. Cette stack rejoint son
+# reseau (TRAEFIK_NETWORK, declare en external) et n'expose aucun port sur
+# l'hote. Postgres et Valkey restent sur un reseau interne non routable.
+#
+# Images publiees par .github/workflows/docker-publish.yml.
+
+name: colanode
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  valkey:
+    image: valkey/valkey:8.1
+    restart: unless-stopped
+    command: ['valkey-server', '--requirepass', '${VALKEY_PASSWORD}', '--appendonly', 'yes']
+    environment:
+      VALKEY_PASSWORD: ${VALKEY_PASSWORD}
+    volumes:
+      - valkey_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'valkey-cli -a "$${VALKEY_PASSWORD}" --no-auth-warning ping | grep PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  server:
+    image: ghcr.io/gambsantoine/colanode-server:${COLANODE_VERSION:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      CONFIG: /config.json
+      # Valeurs referencees depuis config.json via des pointeurs env://
+      SERVER_NAME: ${SERVER_NAME}
+      WEB_DOMAIN: ${WEB_DOMAIN}
+      CORS_ORIGIN: https://${WEB_DOMAIN}
+      POSTGRES_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://:${VALKEY_PASSWORD}@valkey:6379/0
+    volumes:
+      - ./config.json:/config.json:ro
+      - server_storage:/var/lib/colanode/storage
+    networks:
+      - backend
+      - traefik
+    labels:
+      - traefik.enable=true
+      # Le conteneur est sur deux reseaux : indiquer lequel Traefik doit utiliser
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.http.routers.colanode-server.rule=Host(`${SERVER_DOMAIN}`)
+      - traefik.http.routers.colanode-server.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.colanode-server.tls=true
+      - traefik.http.routers.colanode-server.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.services.colanode-server.loadbalancer.server.port=3000
+      # Les WebSockets sont relayes nativement par Traefik, rien a ajouter.
+
+  web:
+    image: ghcr.io/gambsantoine/colanode-web:${COLANODE_VERSION:-latest}
+    restart: unless-stopped
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.http.routers.colanode-web.rule=Host(`${WEB_DOMAIN}`)
+      - traefik.http.routers.colanode-web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
+      - traefik.http.routers.colanode-web.tls=true
+      - traefik.http.routers.colanode-web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.services.colanode-web.loadbalancer.server.port=80
+
+volumes:
+  postgres_data:
+  valkey_data:
+  server_storage:
+
+networks:
+  backend:
+    internal: true
+  traefik:
+    name: ${TRAEFIK_NETWORK}
+    external: true

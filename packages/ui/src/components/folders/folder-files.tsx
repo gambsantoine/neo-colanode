@@ -7,6 +7,7 @@ import { GalleryLayout } from '@colanode/ui/components/folders/galleries/gallery
 import { GridLayout } from '@colanode/ui/components/folders/grids/grid-layout';
 import { ListLayout } from '@colanode/ui/components/folders/lists/list-layout';
 import { FolderContext } from '@colanode/ui/contexts/folder';
+import { useLayout } from '@colanode/ui/contexts/layout';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 
 const FILES_PER_PAGE = 100;
@@ -23,6 +24,7 @@ export const FolderFiles = ({
   layout: folderLayout,
 }: FolderFilesProps) => {
   const workspace = useWorkspace();
+  const layout = useLayout();
   const navigate = useNavigate({ from: '/workspace/$userId/$nodeId' });
 
   const fileListQuery = useLiveInfiniteQuery(
@@ -42,20 +44,31 @@ export const FolderFiles = ({
 
   const files = fileListQuery.data.map((node) => node as LocalFileNode);
 
+  // Tabbed layouts, like in VS Code: a click shows the file in the preview
+  // tab, a double click keeps it open in its own tab.
+  const openFile = (fileId: string, pin: boolean) => {
+    if (layout.openInTab) {
+      layout.openInTab(`/workspace/${workspace.userId}/${fileId}`, { pin });
+      return;
+    }
+
+    navigate({
+      to: 'modal/$modalNodeId',
+      params: { modalNodeId: fileId },
+    });
+  };
+
   return (
     <FolderContext.Provider
       value={{
         id,
         name,
         files,
-        onClick: () => {
-          console.log('onClick');
-        },
+        onClick: (_, id) => openFile(id, false),
         onDoubleClick: (_, id) => {
-          navigate({
-            to: 'modal/$modalNodeId',
-            params: { modalNodeId: id },
-          });
+          if (layout.openInTab) {
+            openFile(id, true);
+          }
         },
         onMove: () => {},
       }}

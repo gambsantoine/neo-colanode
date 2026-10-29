@@ -49,11 +49,33 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    location = /servers.json {
+        add_header Cache-Control "no-store";
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
 }
 EOF
+
+# Generate servers.json at container start from COLANODE_SERVER_URL
+# (comma-separated list of server config URLs, e.g. https://api.example.com/config).
+RUN cat <<'EOF' > /docker-entrypoint.d/40-colanode-servers.sh
+#!/bin/sh
+set -eu
+out=/usr/share/nginx/html/servers.json
+list=""
+IFS=','
+for url in ${COLANODE_SERVER_URL:-}; do
+    url=$(echo "$url" | tr -d ' ')
+    [ -z "$url" ] && continue
+    list="${list:+$list,}\"$url\""
+done
+printf '{"servers":[%s]}\n' "$list" > "$out"
+echo "colanode: default servers -> $(cat "$out")"
+EOF
+RUN chmod +x /docker-entrypoint.d/40-colanode-servers.sh
 
 EXPOSE 80
 

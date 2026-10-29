@@ -3,6 +3,7 @@ import { FileNoPreview } from '@colanode/ui/components/files/file-no-preview';
 import { FilePreview } from '@colanode/ui/components/files/file-preview';
 import { FileSaveButton } from '@colanode/ui/components/files/file-save-button';
 import { FileSidebar } from '@colanode/ui/components/files/file-sidebar';
+import { getDiagramLanguageForFile } from '@colanode/ui/lib/diagram-languages';
 import { canPreviewFile } from '@colanode/ui/lib/files';
 
 interface FileContainerProps {
@@ -10,7 +11,9 @@ interface FileContainerProps {
 }
 
 export const FileContainer = ({ file }: FileContainerProps) => {
-  const canPreview = canPreviewFile(file.subtype);
+  const canPreview =
+    canPreviewFile(file.subtype) ||
+    getDiagramLanguageForFile(file.name) !== undefined;
 
   return (
     <div className="flex h-full max-h-full w-full flex-row items-center gap-2">
