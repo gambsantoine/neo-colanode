@@ -3,10 +3,7 @@ import { cloneDeep } from 'lodash-es';
 import { toast } from 'sonner';
 
 import { mapNodeAttributes } from '@colanode/client/lib';
-import {
-  MutationError,
-  MutationErrorData,
-} from '@colanode/client/mutations';
+import { MutationError, MutationErrorData } from '@colanode/client/mutations';
 import {
   LocalNode,
   NodeCollaborator,

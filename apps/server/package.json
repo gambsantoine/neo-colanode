@@ -26,6 +26,7 @@
     "@types/nodemailer": "^7.0.11",
     "@types/pg": "^8.20.0",
     "@types/ws": "^8.18.1",
+    "del-cli": "^8.0.1",
     "testcontainers": "^11.13.0",
     "tsup": "^8.5.1",
     "vite-tsconfig-paths": "^6.1.1",

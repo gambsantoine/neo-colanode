@@ -83,8 +83,3 @@ export const renderPlantUml = async (
 
   return svg;
 };
-
-// Rendered SVGs must be displayed through an <img> (never injected as markup)
-// so that any script or event handler inside the diagram cannot run.
-export const svgToDataUrl = (svg: string): string =>
-  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;

@@ -22,6 +22,7 @@ export const TabsHeaderItem = ({
   canDelete,
 }: TabsHeaderItemProps) => {
   const tabManager = useTabManager();
+  const isPreview = tabManager.previewTabId === id;
 
   const tabQuery = useLiveQuery(
     (q) =>
@@ -65,9 +66,13 @@ export const TabsHeaderItem = ({
           : 'polygon(12px 0%, calc(100% - 12px) 0%, calc(100% - 6px) 100%, 6px 100%)',
       }}
       onClick={() => tabManager.switchTab(id)}
+      onDoubleClick={() => tabManager.pinTab(id)}
+      title={isPreview ? 'Preview - double-click to keep open' : undefined}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0 z-10">
-        <div className="truncate text-sm font-medium">
+        <div
+          className={cn('truncate text-sm font-medium', isPreview && 'italic')}
+        >
           {tabComponent || 'New tab'}
         </div>
         {canDelete && (

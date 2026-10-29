@@ -11,16 +11,18 @@ Internet ──► Caddy :443 ──► WEB_DOMAIN    ──► web:80
 ## Images
 
 Les images sont construites et publiées sur GitHub Container Registry par
-`.github/workflows/docker-publish.yml` :
+`.github/workflows/docker-publish.yml`, **uniquement lors de la création d'un tag
+`vX.Y.Z`** :
 
 | Image | Tags |
 | --- | --- |
-| `ghcr.io/gambsantoine/colanode-server` | `latest`, `X.Y.Z`, `X.Y`, `X` (tag `vX.Y.Z`) · `edge` (push sur `main`) · `sha-<commit>` |
+| `ghcr.io/gambsantoine/colanode-server` | `X.Y.Z`, `X.Y`, `X`, `latest`, `sha-<commit>` |
 | `ghcr.io/gambsantoine/colanode-web` | idem |
 
-Publier une version :
+Publier une version (depuis `main`) :
 
 ```bash
+git checkout main && git pull
 git tag v1.0.0
 git push origin v1.0.0
 ```
@@ -52,8 +54,9 @@ git push origin v1.0.0
    docker compose logs -f server
    ```
 
-4. Ouvrir `https://WEB_DOMAIN` et ajouter le serveur `SERVER_DOMAIN` dans l'écran
-   de connexion.
+4. Ouvrir `https://WEB_DOMAIN` : le serveur `SERVER_DOMAIN` est pré-enregistré
+   automatiquement (variable `COLANODE_SERVER_URL` du service `web`, plusieurs URL
+   possibles séparées par des virgules).
 
 ## Configuration du serveur
 
