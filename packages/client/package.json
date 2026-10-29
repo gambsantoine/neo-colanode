@@ -27,7 +27,7 @@
     "@colanode/core": "*",
     "@colanode/crdt": "*",
     "@tanstack/db": "^0.5.33",
-    "@tiptap/core": "^3.22.1",
+    "@tiptap/core": "^3.32.1",
     "@tiptap/pm": "^3.22.1",
     "async-lock": "^1.4.1",
     "file-type": "^21.3.4",
