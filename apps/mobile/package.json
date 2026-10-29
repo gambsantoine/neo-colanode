@@ -14,7 +14,7 @@
     "build:ui": "vite build"
   },
   "dependencies": {
-    "expo": "^54.0.33",
+    "expo": "^58.0.21",
     "expo-asset": "^12.0.12",
     "expo-crypto": "~15.0.8",
     "expo-device": "~8.0.10",
