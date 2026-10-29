@@ -171,6 +171,12 @@ export class NodeService {
               name: nodeText.name,
               attributes: nodeText.attributes,
             })
+            .onConflict((oc) =>
+              oc.column('id').doUpdateSet({
+                name: nodeText.name,
+                attributes: nodeText.attributes,
+              })
+            )
             .execute();
         }
 
@@ -342,6 +348,12 @@ export class NodeService {
               name: nodeText.name,
               attributes: nodeText.attributes,
             })
+            .onConflict((oc) =>
+              oc.column('id').doUpdateSet({
+                name: nodeText.name,
+                attributes: nodeText.attributes,
+              })
+            )
             .execute();
         }
 
@@ -544,6 +556,12 @@ export class NodeService {
             name: nodeText.name,
             attributes: nodeText.attributes,
           })
+          .onConflict((oc) =>
+            oc.column('id').doUpdateSet({
+              name: nodeText.name,
+              attributes: nodeText.attributes,
+            })
+          )
           .execute();
       }
 
@@ -832,6 +850,12 @@ export class NodeService {
               name: nodeText.name,
               attributes: nodeText.attributes,
             })
+            .onConflict((oc) =>
+              oc.column('id').doUpdateSet({
+                name: nodeText.name,
+                attributes: nodeText.attributes,
+              })
+            )
             .execute();
         }
 
@@ -981,6 +1005,12 @@ export class NodeService {
               name: nodeText.name,
               attributes: nodeText.attributes,
             })
+            .onConflict((oc) =>
+              oc.column('id').doUpdateSet({
+                name: nodeText.name,
+                attributes: nodeText.attributes,
+              })
+            )
             .execute();
         }
 
@@ -1302,6 +1332,12 @@ export class NodeService {
               name: nodeText.name,
               attributes: nodeText.attributes,
             })
+            .onConflict((oc) =>
+              oc.column('id').doUpdateSet({
+                name: nodeText.name,
+                attributes: nodeText.attributes,
+              })
+            )
             .execute();
         }
 

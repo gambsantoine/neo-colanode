@@ -1,4 +1,10 @@
-import { ColumnType, Insertable, Selectable, Updateable } from 'kysely';
+import {
+  ColumnType,
+  Generated,
+  Insertable,
+  Selectable,
+  Updateable,
+} from 'kysely';
 
 import { DownloadStatus, UploadStatus } from '@colanode/client/types/files';
 import { NodeCounterType } from '@colanode/client/types/nodes';
@@ -121,6 +127,7 @@ export type CreateNodeCounter = Insertable<NodeCounterTable>;
 export type UpdateNodeCounter = Updateable<NodeCounterTable>;
 
 interface NodeTextTable {
+  seq: Generated<number>;
   id: ColumnType<string, string, never>;
   name: ColumnType<string | null, string | null, string | null>;
   attributes: ColumnType<string | null, string | null, string | null>;
@@ -181,6 +188,7 @@ export type CreateDocumentUpdate = Insertable<DocumentUpdateTable>;
 export type UpdateDocumentUpdate = Updateable<DocumentUpdateTable>;
 
 interface DocumentTextTable {
+  seq: Generated<number>;
   id: ColumnType<string, string, never>;
   text: ColumnType<string | null, string | null, string | null>;
 }

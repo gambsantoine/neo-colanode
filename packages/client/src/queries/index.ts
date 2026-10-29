@@ -20,6 +20,7 @@ export * from './icons/icon-search';
 export * from './interactions/radar-data-get';
 export * from './nodes/node-reaction-list';
 export * from './records/record-search';
+export * from './search/workspace-search';
 export * from './users/user-list';
 export * from './users/user-search';
 export * from './workspaces/workspace-list';

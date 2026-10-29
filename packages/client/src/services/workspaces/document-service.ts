@@ -198,6 +198,7 @@ export class DocumentService {
           id: id,
           text: text,
         })
+        .onConflict((oc) => oc.column('id').doUpdateSet({ text: text }))
         .executeTakeFirst();
 
       let createdNodeReferences: CreateNodeReference[] = [];
@@ -367,11 +368,12 @@ export class DocumentService {
       }
 
       await trx
-        .updateTable('document_texts')
-        .set({
+        .insertInto('document_texts')
+        .values({
+          id: document.id,
           text: text,
         })
-        .where('id', '=', document.id)
+        .onConflict((oc) => oc.column('id').doUpdateSet({ text: text }))
         .executeTakeFirst();
 
       const { createdNodeReferences, deletedNodeReferences } =
@@ -587,11 +589,12 @@ export class DocumentService {
       }
 
       await trx
-        .updateTable('document_texts')
-        .set({
+        .insertInto('document_texts')
+        .values({
+          id: document.id,
           text: text,
         })
-        .where('id', '=', document.id)
+        .onConflict((oc) => oc.column('id').doUpdateSet({ text: text }))
         .executeTakeFirst();
 
       const { createdNodeReferences, deletedNodeReferences } =
@@ -789,11 +792,12 @@ export class DocumentService {
           .execute();
 
         await trx
-          .updateTable('document_texts')
-          .set({
+          .insertInto('document_texts')
+          .values({
+            id: data.documentId,
             text: text,
           })
-          .where('id', '=', data.documentId)
+          .onConflict((oc) => oc.column('id').doUpdateSet({ text: text }))
           .executeTakeFirst();
 
         const { createdNodeReferences, deletedNodeReferences } =
@@ -920,6 +924,7 @@ export class DocumentService {
               id: data.documentId,
               text: text,
             })
+            .onConflict((oc) => oc.column('id').doUpdateSet({ text: text }))
             .executeTakeFirst();
 
           const { createdNodeReferences } = await applyMentionUpdates(
