@@ -15,6 +15,7 @@ import { config } from '@colanode/server/lib/config';
 import { generateUrl } from '@colanode/server/lib/fastify';
 import { mapNode, updateNode } from '@colanode/server/lib/nodes';
 import { storage } from '@colanode/server/lib/storage';
+import { buildFileUploadPath } from '@colanode/server/lib/storage/paths';
 import { RedisLocker } from '@colanode/server/lib/storage/tus/redis-locker';
 
 const tryDeleteFile = async (path: string): Promise<void> => {
@@ -59,6 +60,7 @@ export const fileUploadTusRoute: FastifyPluginCallbackZod = (
         .selectFrom('nodes')
         .selectAll()
         .where('id', '=', fileId)
+        .where('workspace_id', '=', workspaceId)
         .executeTakeFirst();
 
       if (!node) {
@@ -83,7 +85,20 @@ export const fileUploadTusRoute: FastifyPluginCallbackZod = (
         });
       }
 
-      const path = `files/${workspaceId}/${fileId}_${file.version}${file.extension}`;
+      const path = buildFileUploadPath(
+        workspaceId,
+        fileId,
+        file.version,
+        file.extension
+      );
+
+      if (!path) {
+        return reply.code(400).send({
+          code: ApiErrorCode.FileUploadFailed,
+          message: 'The file name is not valid.',
+        });
+      }
+
       const url = generateUrl(
         request,
         `/client/v1/workspaces/${workspaceId}/files/${fileId}/tus`

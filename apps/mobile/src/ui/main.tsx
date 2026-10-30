@@ -5,6 +5,7 @@ import { eventBus } from '@colanode/client/lib';
 import { MutationInput, MutationResult } from '@colanode/client/mutations';
 import { QueryInput, QueryMap } from '@colanode/client/queries';
 import { generateId, IdType } from '@colanode/core/lib/id';
+import { isSafeExternalUrl } from '@colanode/core/lib/utils';
 import {
   InitMessage,
   Message,
@@ -127,7 +128,9 @@ window.colanode = {
     return Promise.resolve();
   },
   openExternalUrl: async (url) => {
-    window.open(url, '_blank');
+    if (isSafeExternalUrl(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   },
   showItemInFolder: async () => {
     // No-op on web

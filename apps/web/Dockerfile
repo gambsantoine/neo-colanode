@@ -42,6 +42,14 @@ FROM nginx:1.27-alpine
 
 COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 
+# connect-src stays open because the app connects to any server the user adds.
+RUN cat <<'EOF' > /etc/nginx/security-headers.conf
+add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src * data: blob:; media-src * data: blob:; font-src 'self' data:; connect-src 'self' http: https: ws: wss: data: blob:; worker-src 'self' blob:; frame-src 'self' blob: https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "DENY" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+EOF
+
 RUN cat <<'EOF' > /etc/nginx/conf.d/default.conf
 server {
     listen 80;
@@ -49,7 +57,10 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    include /etc/nginx/security-headers.conf;
+
     location = /servers.json {
+        include /etc/nginx/security-headers.conf;
         add_header Cache-Control "no-store";
     }
 

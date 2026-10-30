@@ -87,6 +87,10 @@ export const fileDownloadRoute: FastifyPluginCallbackZod = (
           reply.header('Content-Type', contentType);
         }
 
+        // Uploaded content must never be rendered on the server origin.
+        reply.header('Content-Disposition', 'attachment');
+        reply.header('X-Content-Type-Options', 'nosniff');
+
         return reply.send(stream);
       } catch {
         return reply.code(404).send({

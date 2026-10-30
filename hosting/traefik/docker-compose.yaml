@@ -76,6 +76,9 @@ services:
       - traefik.http.routers.colanode-server.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
       - traefik.http.routers.colanode-server.tls=true
       - traefik.http.routers.colanode-server.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.middlewares.colanode-security.headers.stsSeconds=31536000
+      - traefik.http.middlewares.colanode-security.headers.contentTypeNosniff=true
+      - traefik.http.routers.colanode-server.middlewares=colanode-security
       - traefik.http.services.colanode-server.loadbalancer.server.port=3000
       # Les WebSockets sont relayes nativement par Traefik, rien a ajouter.
 
@@ -91,6 +94,7 @@ services:
       - traefik.http.routers.colanode-web.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}
       - traefik.http.routers.colanode-web.tls=true
       - traefik.http.routers.colanode-web.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      - traefik.http.routers.colanode-web.middlewares=colanode-security
       - traefik.http.services.colanode-web.loadbalancer.server.port=80
 
 volumes:

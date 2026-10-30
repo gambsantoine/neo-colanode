@@ -14,7 +14,7 @@ export const avatarDownloadRoute: FastifyPluginCallbackZod = (
     url: '/:avatarId',
     schema: {
       params: z.object({
-        avatarId: z.string(),
+        avatarId: z.string().regex(/^[a-z0-9]+$/i),
       }),
     },
     handler: async (request, reply) => {
