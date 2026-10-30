@@ -149,19 +149,28 @@ Les variables d'environnement ne surchargent pas les champs de configuration cla
 
 ### Serveur MCP
 
+Le serveur s'installe sans cloner le repo : seul Node.js 20 ou plus est nécessaire. Créez une clé API dans l'application (paramètres du compte ou du workspace), puis ajoutez le serveur à votre client MCP.
+
+**Claude Code :**
+
 ```bash
-cd apps/mcp
-npm run build
+claude mcp add colanode \
+  -e COLANODE_URL=http://localhost:3000 \
+  -e COLANODE_API_KEY=<votre clé API> \
+  -- npx -y https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.0/colanode-mcp-1.0.0.tgz
 ```
 
-Créez une clé API dans l'application (paramètres du compte ou du workspace), puis déclarez le serveur dans votre client MCP :
+**Autres clients MCP** (Claude Desktop, Cursor, etc.) :
 
 ```json
 {
   "mcpServers": {
     "colanode": {
-      "command": "node",
-      "args": ["/chemin/vers/colanode/apps/mcp/dist/index.js"],
+      "command": "npx",
+      "args": [
+        "-y",
+        "https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.0/colanode-mcp-1.0.0.tgz"
+      ],
       "env": {
         "COLANODE_URL": "http://localhost:3000",
         "COLANODE_API_KEY": "<votre clé API>"
@@ -170,6 +179,8 @@ Créez une clé API dans l'application (paramètres du compte ou du workspace), 
   }
 }
 ```
+
+Pour publier une nouvelle version, changez `version` dans `apps/mcp/package.json`, puis poussez un tag `mcp-vX.Y.Z` : le workflow `mcp-release.yml` construit le paquet et crée la release GitHub.
 
 ## Tests
 
