@@ -2,12 +2,22 @@
 	email {$ACME_EMAIL}
 }
 
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+}
+
 {$WEB_DOMAIN} {
+	import security_headers
 	encode zstd gzip
 	reverse_proxy web:80
 }
 
 {$SERVER_DOMAIN} {
+	import security_headers
 	encode zstd gzip
 	# WebSocket upgrades are proxied transparently by Caddy.
 	reverse_proxy server:3000

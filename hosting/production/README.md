@@ -74,7 +74,14 @@ Points à revoir avant l'ouverture au public :
   `EMAIL_SMTP_*` ajoutées à `.env` et à l'`environment` du service `server`.
 - **Stockage** : par défaut sur disque dans le volume `server_storage`. Pour S3,
   remplacer `storage.provider` par le bloc `s3` de `apps/server/config.example.json`
-  et ajouter les variables `S3_*`.
+  et ajouter les variables `S3_*`. Pour un autre dossier que `/var/lib/colanode/storage`,
+  ajouter `COLANODE_STORAGE_DIR` à l'`environment` du service `server` : le conteneur
+  tourne sous l'utilisateur `node` et lui attribue ce dossier au démarrage.
+- **Proxy** : `trustProxy` liste les adresses des proxys devant le serveur, séparées
+  par des virgules. La valeur par défaut couvre les réseaux privés, dont celui de
+  Docker. Si elle ne correspond pas à votre proxy, l'IP des clients et donc les
+  limites de débit seront faussées. Derrière Cloudflare, définir `clientIpHeader` à
+  `cf-connecting-ip`, uniquement si le serveur n'est joignable que par Cloudflare.
 
 ## Exploitation
 

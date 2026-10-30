@@ -1,5 +1,8 @@
 FROM node:22-alpine
 
+# Lets the entrypoint drop root privileges
+RUN apk add --no-cache su-exec
+
 WORKDIR /app
 
 # Copy root workspace files
@@ -31,8 +34,13 @@ RUN npm run build -w @colanode/core && \
     npm run build -w @colanode/server && \
     npm prune --production
 
+# Default locations of the file storage, writable by the runtime user
+RUN mkdir -p /var/lib/colanode/storage /app/data && \
+    chown node:node /var/lib/colanode/storage /app/data
+
 ENV NODE_ENV=production
 
 EXPOSE 3000
 
+ENTRYPOINT ["sh", "/app/apps/server/docker-entrypoint.sh"]
 CMD ["node", "apps/server/dist/index.js"]
