@@ -1,0 +1,56 @@
+name: MCP - Build and publish release
+
+# Builds the MCP server and attaches its npm tarball to a GitHub release, so it
+# can be installed with `npx -y <tarball url>` without using the npm registry.
+#
+# Only runs when a tag mcp-vX.Y.Z is pushed. X.Y.Z must match the version in
+# apps/mcp/package.json.
+
+on:
+  push:
+    tags:
+      - 'mcp-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Check tag matches package version
+        run: |
+          version="$(node -p "require('./apps/mcp/package.json').version")"
+          test "${GITHUB_REF_NAME}" = "mcp-v${version}"
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Test
+        run: npm run test -w @colanode/mcp
+
+      - name: Build
+        run: npm run build -w @colanode/mcp
+
+      - name: Pack
+        run: npm pack -w @colanode/mcp
+
+      # --latest=false keeps the application release (vX.Y.Z) as the repo's latest.
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" colanode-mcp-*.tgz \
+            --title "MCP ${GITHUB_REF_NAME#mcp-v}" \
+            --generate-notes \
+            --latest=false
