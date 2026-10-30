@@ -71,7 +71,8 @@ export const usersCreateRoute: FastifyPluginCallbackZod = (
       };
 
       for (const user of input.users) {
-        const account = await getOrCreateAccount(user.email);
+        // Registration looks accounts up by their lowercase email.
+        const account = await getOrCreateAccount(user.email.toLowerCase());
         if (!account) {
           output.errors.push({
             email: user.email,

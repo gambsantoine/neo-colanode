@@ -2,6 +2,7 @@ import argon2 from '@node-rs/argon2';
 import ms from 'ms';
 
 import {
+  AccountStatus,
   IdType,
   UserStatus,
   WorkspaceRole,
@@ -172,6 +173,34 @@ export const buildLoginVerifyOutput = async (
   };
 };
 
+/**
+ * Only for the first account of a server: nobody can invite it, and without an
+ * account nothing would ever be created when registration is closed.
+ */
+export const hasAccounts = async (): Promise<boolean> => {
+  const account = await database
+    .selectFrom('accounts')
+    .select('id')
+    .limit(1)
+    .executeTakeFirst();
+
+  return account !== undefined;
+};
+
+/** An invitation is a user created in a workspace by one of its admins. */
+export const isAccountInvited = async (accountId: string): Promise<boolean> => {
+  const user = await database
+    .selectFrom('users')
+    .select('id')
+    .where('account_id', '=', accountId)
+    .where('status', '=', UserStatus.Active)
+    .where('role', '!=', 'none')
+    .limit(1)
+    .executeTakeFirst();
+
+  return user !== undefined;
+};
+
 export const verifyOtpCode = async (
   id: string,
   otpCode: string
@@ -297,11 +326,21 @@ export const sendWorkspaceInvitationEmail = async (
     return;
   }
 
+  const inviteeAccount = await database
+    .selectFrom('accounts')
+    .where('id', '=', user.account_id)
+    .select('status')
+    .executeTakeFirst();
+
   const html = workspaceInvitationTemplate({
     inviteeName: user.name,
     inviterName: inviterAccount.name,
     workspaceName: workspace.name,
     invitationUrl: `${config.web.protocol}://${config.web.domain}`,
+    // See email-register: an invited account is activated by proving its email.
+    activationRequired:
+      config.account.verificationType === 'manual' &&
+      inviteeAccount?.status === AccountStatus.Pending,
   });
 
   await emailService.sendEmail({

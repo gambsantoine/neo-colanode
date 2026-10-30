@@ -68,7 +68,12 @@ modifiés directement dans le JSON.
 Points à revoir avant l'ouverture au public :
 
 - **`account.verificationType`** : `automatic` (tout le monde peut s'inscrire),
-  `manual` (validation par un administrateur) ou `email` (nécessite `email.enabled`).
+  `manual` (sur invitation uniquement) ou `email` (nécessite `email.enabled`).
+  En mode `manual`, seul le premier compte de l'instance peut s'inscrire librement :
+  créez-le avant d'ouvrir le serveur au public. Les suivants sont invités par un
+  owner ou admin de workspace. Avec `email.enabled`, l'invité active son compte par
+  « Mot de passe oublié », ce qui prouve qu'il possède l'adresse. Sans e-mail,
+  quiconque connaît l'adresse invitée peut s'inscrire à sa place.
 - **Email (SMTP)** : passer `email.enabled` à `true` et renseigner le bloc
   `provider` (voir `apps/server/config.example.json`), avec les variables
   `EMAIL_SMTP_*` ajoutées à `.env` et à l'`environment` du service `server`.

@@ -16,6 +16,8 @@ import { UpdateAccount } from '@colanode/server/data/schema';
 import {
   buildLoginSuccessOutput,
   buildLoginVerifyOutput,
+  hasAccounts,
+  isAccountInvited,
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
 import { storage } from '@colanode/server/lib/storage';
@@ -47,13 +49,25 @@ interface GoogleUserResponse {
   picture?: string | null;
 }
 
-// A verified Google email replaces the email check, not an admin's approval.
-const canActivate = (googleUser: GoogleUserResponse): boolean => {
+// A verified Google email replaces the email check, not an invitation.
+const canActivate = async (
+  googleUser: GoogleUserResponse,
+  accountId?: string
+): Promise<boolean> => {
   const { verificationType } = config.account;
-  return (
-    verificationType === 'automatic' ||
-    (verificationType === 'email' && googleUser.verified_email)
-  );
+  if (verificationType === 'automatic') {
+    return true;
+  }
+
+  if (!googleUser.verified_email) {
+    return false;
+  }
+
+  if (verificationType === 'email') {
+    return true;
+  }
+
+  return accountId ? await isAccountInvited(accountId) : !(await hasAccounts());
 };
 
 const fetchGoogleToken = async (
@@ -142,6 +156,7 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
       response: {
         200: loginOutputSchema,
         400: apiErrorOutputSchema,
+        403: apiErrorOutputSchema,
         429: apiErrorOutputSchema,
       },
     },
@@ -204,7 +219,7 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
 
         if (
           existingAccount.status !== AccountStatus.Active &&
-          canActivate(googleUser)
+          (await canActivate(googleUser, existingAccount.id))
         ) {
           updateAccount.status = AccountStatus.Active;
         }
@@ -253,14 +268,25 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
         return output;
       }
 
+      const status = (await canActivate(googleUser))
+        ? AccountStatus.Active
+        : AccountStatus.Unverified;
+
+      if (
+        config.account.verificationType === 'manual' &&
+        status !== AccountStatus.Active
+      ) {
+        return reply.code(403).send({
+          code: ApiErrorCode.AccountInvitationRequired,
+          message:
+            'Registration is by invitation only. Ask a workspace admin to invite you.',
+        });
+      }
+
       let avatar: string | null = null;
       if (googleUser.picture) {
         avatar = await uploadGooglePictureAsAvatar(googleUser.picture);
       }
-
-      const status = canActivate(googleUser)
-        ? AccountStatus.Active
-        : AccountStatus.Unverified;
 
       const newAccount = await database
         .insertInto('accounts')

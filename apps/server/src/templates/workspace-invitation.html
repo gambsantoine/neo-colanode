@@ -31,6 +31,13 @@
         <b>{{inviterName}}</b> has invited you to join the
         <b>{{workspaceName}}</b> workspace on Colanode.
       </p>
+      {{#if activationRequired}}
+      <p>
+        An account has been created for you with this email address. To activate
+        it, open the link below, choose <b>Forgot password?</b> on the login
+        page and enter this email address to set your password.
+      </p>
+      {{/if}}
       <p>Click the button below to get started:</p>
       <div style="margin: 30px 0; text-align: center">
         <a

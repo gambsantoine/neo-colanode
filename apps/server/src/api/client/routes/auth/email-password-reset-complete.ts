@@ -11,6 +11,7 @@ import {
 import { database } from '@colanode/server/data/database';
 import {
   generatePasswordHash,
+  isAccountInvited,
   verifyOtpCode,
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
@@ -56,10 +57,12 @@ export const emailPasswordResetCompleteRoute: FastifyPluginCallbackZod = (
         });
       }
 
-      // Proving the ownership of an email must not skip an admin's approval.
+      // Proving the ownership of an email activates an invited account, but
+      // does not replace an invitation when accounts are manual.
       const status =
         config.account.verificationType === 'manual' &&
-        account.status !== AccountStatus.Active
+        account.status !== AccountStatus.Active &&
+        !(await isAccountInvited(account.id))
           ? AccountStatus.Unverified
           : AccountStatus.Active;
 
