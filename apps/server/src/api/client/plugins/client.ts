@@ -2,6 +2,7 @@ import { FastifyPluginCallback, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 
 import { ApiHeader } from '@colanode/core';
+import { config } from '@colanode/server/lib/config';
 import { ClientContext, ClientType } from '@colanode/server/types/api';
 
 declare module 'fastify' {
@@ -24,12 +25,12 @@ const clientDecoratorCallback: FastifyPluginCallback = (fastify, _, done) => {
   }
 
   fastify.addHook('onRequest', async (request) => {
-    const ipValue =
-      getHeaderAsString(request, 'cf-connecting-ip') ||
-      getHeaderAsString(request, 'x-forwarded-for') ||
+    // Headers are client controlled: only the configured one is trusted, and
+    // `request.ip` honours the `trustProxy` setting.
+    const ip =
+      (config.clientIpHeader &&
+        getHeaderAsString(request, config.clientIpHeader)) ||
       request.ip;
-
-    const ip = ipValue.split(',')[0]!;
     const platform = getHeaderAsString(request, ApiHeader.ClientPlatform);
     const version = getHeaderAsString(request, ApiHeader.ClientVersion);
     const type = getHeaderAsString(request, ApiHeader.ClientType);

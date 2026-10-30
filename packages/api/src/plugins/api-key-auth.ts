@@ -70,6 +70,13 @@ export const createApiKeyAuthenticator = (
         });
       }
 
+      if (await repository.isIpRateLimited(request.ip)) {
+        return reply.code(429).send({
+          code: ApiErrorCode.TooManyRequests,
+          message: 'Too many requests. Please try again later.',
+        });
+      }
+
       const result = await repository.verifyApiKey(
         tokenData.apiKeyId,
         tokenData.secret
@@ -82,13 +89,25 @@ export const createApiKeyAuthenticator = (
         });
       }
 
+      if (await repository.isApiKeyRateLimited(tokenData.apiKeyId)) {
+        return reply.code(429).send({
+          code: ApiErrorCode.TooManyRequests,
+          message: 'Too many requests. Please try again later.',
+        });
+      }
+
       request.apiKeyContext = {
         apiKeyId: tokenData.apiKeyId,
         accountId: result.accountId,
         workspaceId: result.workspaceId,
       };
 
-      void repository.touchApiKeyLastUsed(tokenData.apiKeyId);
+      // Not awaited: a failure must not fail the request nor crash the process.
+      repository
+        .touchApiKeyLastUsed(tokenData.apiKeyId)
+        .catch((error: unknown) => {
+          request.log.error(error, 'Failed to update the api key last use');
+        });
     });
 
     done();

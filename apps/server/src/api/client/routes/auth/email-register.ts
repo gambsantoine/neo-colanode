@@ -15,6 +15,7 @@ import {
   buildLoginSuccessOutput,
   buildLoginVerifyOutput,
   generatePasswordHash,
+  hasAccounts,
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
 import { isAuthEmailRateLimited } from '@colanode/server/lib/rate-limits';
@@ -32,6 +33,7 @@ export const emailRegisterRoute: FastifyPluginCallbackZod = (
       response: {
         200: loginOutputSchema,
         400: apiErrorOutputSchema,
+        403: apiErrorOutputSchema,
         429: apiErrorOutputSchema,
       },
     },
@@ -53,14 +55,36 @@ export const emailRegisterRoute: FastifyPluginCallbackZod = (
         .where('email', '=', email)
         .executeTakeFirst();
 
+      if (config.account.verificationType === 'manual') {
+        if (!existingAccount && (await hasAccounts())) {
+          return reply.code(403).send({
+            code: ApiErrorCode.AccountInvitationRequired,
+            message:
+              'Registration is by invitation only. Ask a workspace admin to invite you.',
+          });
+        }
+
+        // Setting a password here would not prove who owns the invited email.
+        if (
+          existingAccount?.status === AccountStatus.Pending &&
+          config.email.enabled
+        ) {
+          return reply.code(403).send({
+            code: ApiErrorCode.AccountInvitationRequired,
+            message:
+              'You have been invited. Use "Forgot password" with this email to activate your account.',
+          });
+        }
+      }
+
       const password = await generatePasswordHash(input.password);
 
       let account: SelectAccount | null | undefined = null;
 
       const status =
-        config.account.verificationType === 'automatic'
-          ? AccountStatus.Active
-          : AccountStatus.Unverified;
+        config.account.verificationType === 'email'
+          ? AccountStatus.Unverified
+          : AccountStatus.Active;
 
       if (existingAccount) {
         if (existingAccount.status !== AccountStatus.Pending) {

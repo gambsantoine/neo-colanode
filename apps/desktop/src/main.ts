@@ -25,6 +25,7 @@ import {
   extractFileSubtype,
   generateId,
   IdType,
+  isSafeExternalUrl,
 } from '@colanode/core';
 import { AppBadge } from '@colanode/desktop/main/app-badge';
 import { BootstrapService } from '@colanode/desktop/main/bootstrap';
@@ -59,12 +60,30 @@ if (started) {
 updateElectronApp({
   updateSource: {
     type: UpdateSourceType.ElectronPublicUpdateService,
-    repo: 'colanode/colanode',
+    repo: 'gambsantoine/neo-colanode',
     host: 'https://update.electronjs.org',
   },
   updateInterval: '5 minutes',
   notifyUser: true,
 });
+
+const openExternalUrl = (url: string) => {
+  if (isSafeExternalUrl(url)) {
+    shell.openExternal(url);
+  }
+};
+
+// Only the app itself may load in the window, as it has access to the preload API.
+const isAppUrl = (url: string, appUrl: string): boolean => {
+  const target = new URL(url);
+  const current = new URL(appUrl);
+
+  return (
+    target.protocol === current.protocol &&
+    target.origin === current.origin &&
+    (target.protocol !== 'file:' || target.pathname === current.pathname)
+  );
+};
 
 const createWindow = async () => {
   nativeTheme.themeSource = bootstrap.theme ?? 'system';
@@ -148,8 +167,15 @@ const createWindow = async () => {
   }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url);
+    openExternalUrl(details.url);
     return { action: 'deny' }; // Prevent default new-window behavior
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!isAppUrl(url, mainWindow.webContents.getURL())) {
+      event.preventDefault();
+      openExternalUrl(url);
+    }
   });
 
   globalShortcut.register('CommandOrControl+Shift+V', () => {
@@ -350,7 +376,7 @@ ipcMain.handle(
 );
 
 ipcMain.handle('open-external-url', (_, url: string) => {
-  shell.openExternal(url);
+  openExternalUrl(url);
 });
 
 ipcMain.handle('show-item-in-folder', (_, path: string) => {

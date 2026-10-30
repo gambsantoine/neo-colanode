@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 
 import { ApiKeyAuditOutput } from '@colanode/core';
 import { ApiKeyRevokeDialog } from '@colanode/ui/components/accounts/api-key-revoke-dialog';
+import { McpSetupNote } from '@colanode/ui/components/api-keys/mcp-setup-note';
 import { Avatar } from '@colanode/ui/components/avatars/avatar';
 import { Container } from '@colanode/ui/components/layouts/containers/container';
 import { Button } from '@colanode/ui/components/ui/button';
@@ -96,6 +97,7 @@ export const WorkspaceApiKeysContainer = () => {
               </div>
             ))}
           </div>
+          <McpSetupNote canCreateKeysHere={false} />
         </div>
       </div>
       {revokeTarget && (

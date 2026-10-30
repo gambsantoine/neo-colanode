@@ -68,13 +68,29 @@ modifiés directement dans le JSON.
 Points à revoir avant l'ouverture au public :
 
 - **`account.verificationType`** : `automatic` (tout le monde peut s'inscrire),
-  `manual` (validation par un administrateur) ou `email` (nécessite `email.enabled`).
+  `manual` (sur invitation uniquement) ou `email` (nécessite `email.enabled`).
+  En mode `manual`, seul le premier compte de l'instance peut s'inscrire librement :
+  créez-le avant d'ouvrir le serveur au public. Les suivants sont invités par un
+  owner ou admin de workspace. Avec `email.enabled`, l'invité active son compte par
+  « Mot de passe oublié », ce qui prouve qu'il possède l'adresse. Sans e-mail,
+  quiconque connaît l'adresse invitée peut s'inscrire à sa place.
 - **Email (SMTP)** : passer `email.enabled` à `true` et renseigner le bloc
   `provider` (voir `apps/server/config.example.json`), avec les variables
   `EMAIL_SMTP_*` ajoutées à `.env` et à l'`environment` du service `server`.
 - **Stockage** : par défaut sur disque dans le volume `server_storage`. Pour S3,
   remplacer `storage.provider` par le bloc `s3` de `apps/server/config.example.json`
-  et ajouter les variables `S3_*`.
+  et ajouter les variables `S3_*`. Pour un autre dossier que `/var/lib/colanode/storage`,
+  ajouter `COLANODE_STORAGE_DIR` à l'`environment` du service `server` : le conteneur
+  tourne sous l'utilisateur `node` et lui attribue ce dossier au démarrage.
+- **Proxy** : `trustProxy` liste les adresses des proxys devant le serveur, séparées
+  par des virgules. La valeur par défaut couvre les réseaux privés, dont celui de
+  Docker. Si elle ne correspond pas à votre proxy, l'IP des clients et donc les
+  limites de débit seront faussées. Derrière Cloudflare, définir `clientIpHeader` à
+  `cf-connecting-ip`, uniquement si le serveur n'est joignable que par Cloudflare.
+- **draw.io** : l'outil charge l'éditeur depuis `https://embed.diagrams.net`, donc il
+  demande un accès à ce site. Pour l'auto-héberger, lancer l'image `jgraph/drawio`,
+  définir `VITE_DRAWIO_URL` au build de l'image web et ajouter son origine au
+  `frame-src` de `apps/web/Dockerfile`.
 
 ## Exploitation
 

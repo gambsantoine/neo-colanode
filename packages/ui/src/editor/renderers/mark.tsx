@@ -1,6 +1,7 @@
 import { JSONContent } from '@tiptap/core';
 import { Fragment } from 'react';
 
+import { isSafeExternalUrl } from '@colanode/core';
 import { defaultClasses } from '@colanode/ui/editor/classes';
 
 interface MarkRendererProps {
@@ -31,7 +32,11 @@ export const MarkRenderer = ({ node, children }: MarkRendererProps) => {
         result = (
           <span className={`bg-${mark.attrs.highlight}-200`}>{result}</span>
         );
-      } else if (mark.type === 'link' && mark.attrs?.href) {
+      } else if (
+        mark.type === 'link' &&
+        mark.attrs &&
+        isSafeExternalUrl(mark.attrs.href)
+      ) {
         result = (
           <a
             href={mark.attrs.href}

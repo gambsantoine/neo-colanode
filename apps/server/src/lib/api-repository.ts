@@ -29,6 +29,10 @@ import {
   updateApiNode,
 } from '@colanode/server/lib/api-nodes';
 import { fetchNodeUpdates } from '@colanode/server/lib/nodes';
+import {
+  isApiIpRateLimited,
+  isApiKeyRateLimited,
+} from '@colanode/server/lib/rate-limits';
 
 const escapeLikePattern = (value: string) =>
   `%${value.replace(/[\\%_]/g, '\\$&')}%`;
@@ -110,6 +114,8 @@ export const apiRepository: ApiRepository = {
       .where('id', '=', apiKeyId)
       .execute();
   },
+  isIpRateLimited: isApiIpRateLimited,
+  isApiKeyRateLimited,
   listWorkspaces: async (accountId, workspaceId, page) => {
     let query = database
       .selectFrom('workspaces')

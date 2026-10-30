@@ -157,7 +157,7 @@ Le serveur s'installe sans cloner le repo : seul Node.js 20 ou plus est nécessa
 claude mcp add colanode \
   -e COLANODE_URL=http://localhost:3000 \
   -e COLANODE_API_KEY=<votre clé API> \
-  -- npx -y https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.0/colanode-mcp-1.0.0.tgz
+  -- npx -y https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.1/colanode-mcp-1.0.1.tgz
 ```
 
 **Autres clients MCP** (Claude Desktop, Cursor, etc.) :
@@ -169,7 +169,7 @@ claude mcp add colanode \
       "command": "npx",
       "args": [
         "-y",
-        "https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.0/colanode-mcp-1.0.0.tgz"
+        "https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.1/colanode-mcp-1.0.1.tgz"
       ],
       "env": {
         "COLANODE_URL": "http://localhost:3000",

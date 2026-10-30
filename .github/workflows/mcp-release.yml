@@ -1,7 +1,8 @@
 name: MCP - Build and publish release
 
-# Builds the MCP server and attaches its npm tarball to a GitHub release, so it
-# can be installed with `npx -y <tarball url>` without using the npm registry.
+# Builds the MCP server and attaches its npm tarball and checksum to a GitHub
+# release, so it can be installed with `npx -y <tarball url>` without using the
+# npm registry.
 #
 # Only runs when a tag mcp-vX.Y.Z is pushed. X.Y.Z must match the version in
 # apps/mcp/package.json.
@@ -12,18 +13,18 @@ on:
       - 'mcp-v*'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
-    name: Build and release
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: 'npm'
@@ -43,14 +44,39 @@ jobs:
         run: npm run build -w @colanode/mcp
 
       - name: Pack
-        run: npm pack -w @colanode/mcp
+        run: |
+          npm pack -w @colanode/mcp
+          sha256sum colanode-mcp-*.tgz > colanode-mcp.sha256
+
+      - name: Upload package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mcp-package
+          path: |
+            colanode-mcp-*.tgz
+            colanode-mcp.sha256
+          retention-days: 1
+
+  # Only this job can write to the repository: it runs no project code.
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: mcp-package
 
       # --latest=false keeps the application release (vX.Y.Z) as the repo's latest.
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" colanode-mcp-*.tgz \
+          gh release create "${GITHUB_REF_NAME}" colanode-mcp-*.tgz colanode-mcp.sha256 \
             --title "MCP ${GITHUB_REF_NAME#mcp-v}" \
             --generate-notes \
             --latest=false

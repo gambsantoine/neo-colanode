@@ -14,6 +14,7 @@ export enum ApiErrorCode {
   AccountOtpInvalid = 'account_otp_invalid',
   AccountOtpTooManyAttempts = 'account_otp_too_many_attempts',
   AccountPendingVerification = 'account_pending_verification',
+  AccountInvitationRequired = 'account_invitation_required',
   EmailOrPasswordIncorrect = 'email_or_password_incorrect',
   GoogleAuthFailed = 'google_auth_failed',
   AccountCreationFailed = 'account_creation_failed',

@@ -72,7 +72,7 @@ export const handleLocalRequest = async (
       return new Response(null, { status: 400 });
     }
 
-    const filePath = path.join(paths.assets, 'fonts', fontName);
+    const filePath = path.join(paths.assets, 'fonts', path.basename(fontName));
     const fileUrl = `file://${filePath}`;
     const subRequest = new Request(fileUrl, request);
     return net.fetch(subRequest);
@@ -84,8 +84,15 @@ export const handleLocalRequest = async (
       return new Response(null, { status: 400 });
     }
 
-    const path = Buffer.from(base64Path, 'base64').toString('utf-8');
-    const fileUrl = `file://${path}`;
+    // Every file served here lives in the app data directory.
+    const filePath = path.resolve(
+      Buffer.from(base64Path, 'base64').toString('utf-8')
+    );
+    if (!filePath.startsWith(path.resolve(paths.app) + path.sep)) {
+      return new Response(null, { status: 403 });
+    }
+
+    const fileUrl = `file://${filePath}`;
     const subRequest = new Request(fileUrl, request);
     return net.fetch(subRequest);
   }

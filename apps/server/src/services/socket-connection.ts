@@ -167,6 +167,10 @@ export class SocketConnection {
         cursor
       );
     } else if (message.input.type === 'node.reactions') {
+      if (!user.rootIds.has(message.input.rootId)) {
+        return null;
+      }
+
       return new NodeReactionSynchronizer(
         message.id,
         user.user,
@@ -174,6 +178,10 @@ export class SocketConnection {
         cursor
       );
     } else if (message.input.type === 'node.interactions') {
+      if (!user.rootIds.has(message.input.rootId)) {
+        return null;
+      }
+
       return new NodeInteractionSynchronizer(
         message.id,
         user.user,
