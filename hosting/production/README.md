@@ -87,6 +87,10 @@ Points à revoir avant l'ouverture au public :
   Docker. Si elle ne correspond pas à votre proxy, l'IP des clients et donc les
   limites de débit seront faussées. Derrière Cloudflare, définir `clientIpHeader` à
   `cf-connecting-ip`, uniquement si le serveur n'est joignable que par Cloudflare.
+- **draw.io** : l'outil charge l'éditeur depuis `https://embed.diagrams.net`, donc il
+  demande un accès à ce site. Pour l'auto-héberger, lancer l'image `jgraph/drawio`,
+  définir `VITE_DRAWIO_URL` au build de l'image web et ajouter son origine au
+  `frame-src` de `apps/web/Dockerfile`.
 
 ## Exploitation
 

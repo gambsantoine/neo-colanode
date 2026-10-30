@@ -4,6 +4,7 @@ import {
   KeyRound,
   LucideIcon,
   QrCode,
+  Shapes,
   Workflow,
 } from 'lucide-react';
 
@@ -13,6 +14,7 @@ import {
 export type ToolPath =
   | 'tools/plantuml'
   | 'tools/mermaid'
+  | 'tools/drawio'
   | 'tools/json'
   | 'tools/qrcode'
   | 'tools/password';
@@ -57,6 +59,15 @@ export const tools: ToolDefinition[] = [
     path: 'tools/mermaid',
     category: 'diagrams',
     keywords: ['diagram', 'flowchart', 'gantt', 'sequence', 'mmd', 'chart'],
+  },
+  {
+    id: 'drawio',
+    name: 'draw.io editor',
+    description: 'Draw diagrams with the draw.io editor and save them as files',
+    icon: Shapes,
+    path: 'tools/drawio',
+    category: 'diagrams',
+    keywords: ['diagram', 'drawio', 'diagrams.net', 'schema', 'flowchart'],
   },
   {
     id: 'json',

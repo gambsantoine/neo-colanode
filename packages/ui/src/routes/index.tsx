@@ -47,6 +47,8 @@ import {
   workspaceSettingsRoute,
 } from '@colanode/ui/routes/workspace/settings';
 import {
+  workspaceToolsDrawioMaskRoute,
+  workspaceToolsDrawioRoute,
   workspaceToolsJsonMaskRoute,
   workspaceToolsJsonRoute,
   workspaceToolsMermaidMaskRoute,
@@ -91,6 +93,7 @@ export const routeTree = rootRoute.addChildren([
     appAppearanceRoute,
     workspaceToolsPlantUmlRoute,
     workspaceToolsMermaidRoute,
+    workspaceToolsDrawioRoute,
     workspaceToolsJsonRoute,
     workspaceToolsQrCodeRoute,
     workspaceToolsPasswordRoute,
@@ -111,6 +114,7 @@ export const routeTree = rootRoute.addChildren([
     appAppearanceMaskRoute,
     workspaceToolsPlantUmlMaskRoute,
     workspaceToolsMermaidMaskRoute,
+    workspaceToolsDrawioMaskRoute,
     workspaceToolsJsonMaskRoute,
     workspaceToolsQrCodeMaskRoute,
     workspaceToolsPasswordMaskRoute,
