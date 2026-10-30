@@ -6,6 +6,7 @@ import { ApiKeyOutput } from '@colanode/core';
 import { AccountApiKeysBreadcrumb } from '@colanode/ui/components/accounts/account-api-keys-breadcrumb';
 import { ApiKeyCreateDialog } from '@colanode/ui/components/accounts/api-key-create-dialog';
 import { ApiKeyRevokeDialog } from '@colanode/ui/components/accounts/api-key-revoke-dialog';
+import { McpSetupNote } from '@colanode/ui/components/api-keys/mcp-setup-note';
 import { Container } from '@colanode/ui/components/layouts/containers/container';
 import { Button } from '@colanode/ui/components/ui/button';
 import { Separator } from '@colanode/ui/components/ui/separator';
@@ -92,6 +93,7 @@ export const AccountApiKeysContainer = () => {
               </div>
             ))}
           </div>
+          <McpSetupNote canCreateKeysHere />
         </div>
       </div>
       <ApiKeyCreateDialog
