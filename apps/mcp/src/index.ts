@@ -197,6 +197,27 @@ server.registerTool(
 );
 
 server.registerTool(
+  'create_category',
+  {
+    description:
+      'Create a category at the top level of a space. Use its id as parentId in create_page to place pages inside it.',
+    inputSchema: {
+      ...locationArgs,
+      name: z.string().min(1).describe('Category name'),
+    },
+  },
+  run(async ({ workspaceId, spaceId, name }) => {
+    const node = await api.createNode(workspaceId, spaceId, {
+      type: 'category',
+      name,
+      parentId: spaceId,
+    });
+
+    return json({ id: node.id, name: node.name, parentId: node.parentId });
+  })
+);
+
+server.registerTool(
   'write_document',
   {
     description:
