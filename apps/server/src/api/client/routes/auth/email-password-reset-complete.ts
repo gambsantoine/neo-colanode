@@ -13,6 +13,7 @@ import {
   generatePasswordHash,
   verifyOtpCode,
 } from '@colanode/server/lib/accounts';
+import { config } from '@colanode/server/lib/config';
 
 export const emailPasswordResetCompleteRoute: FastifyPluginCallbackZod = (
   instance,
@@ -55,13 +56,20 @@ export const emailPasswordResetCompleteRoute: FastifyPluginCallbackZod = (
         });
       }
 
+      // Proving the ownership of an email must not skip an admin's approval.
+      const status =
+        config.account.verificationType === 'manual' &&
+        account.status !== AccountStatus.Active
+          ? AccountStatus.Unverified
+          : AccountStatus.Active;
+
       const password = await generatePasswordHash(input.password);
       const updatedAccount = await database
         .updateTable('accounts')
         .returningAll()
         .set({
           password,
-          status: AccountStatus.Active,
+          status,
           updated_at: new Date(),
         })
         .where('id', '=', accountId)
@@ -78,6 +86,14 @@ export const emailPasswordResetCompleteRoute: FastifyPluginCallbackZod = (
       await database
         .deleteFrom('devices')
         .where('account_id', '=', accountId)
+        .execute();
+
+      // and revoke the api keys, which would otherwise outlive the reset
+      await database
+        .updateTable('api_keys')
+        .set({ revoked_at: new Date(), revoked_by: accountId })
+        .where('account_id', '=', accountId)
+        .where('revoked_at', 'is', null)
         .execute();
 
       const output: EmailPasswordResetCompleteOutput = {

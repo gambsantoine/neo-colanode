@@ -47,6 +47,15 @@ interface GoogleUserResponse {
   picture?: string | null;
 }
 
+// A verified Google email replaces the email check, not an admin's approval.
+const canActivate = (googleUser: GoogleUserResponse): boolean => {
+  const { verificationType } = config.account;
+  return (
+    verificationType === 'automatic' ||
+    (verificationType === 'email' && googleUser.verified_email)
+  );
+};
+
 const fetchGoogleToken = async (
   code: string,
   clientId: string,
@@ -195,7 +204,7 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
 
         if (
           existingAccount.status !== AccountStatus.Active &&
-          googleUser.verified_email
+          canActivate(googleUser)
         ) {
           updateAccount.status = AccountStatus.Active;
         }
@@ -223,6 +232,19 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
           });
         }
 
+        if (existingAccount.status !== AccountStatus.Active) {
+          if (config.account.verificationType === 'email') {
+            const output = await buildLoginVerifyOutput(existingAccount);
+            return output;
+          }
+
+          return reply.code(400).send({
+            code: ApiErrorCode.AccountPendingVerification,
+            message:
+              'Account is not verified yet. Contact your administrator to verify your account.',
+          });
+        }
+
         const output = await buildLoginSuccessOutput(
           existingAccount,
           request.client
@@ -236,12 +258,9 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
         avatar = await uploadGooglePictureAsAvatar(googleUser.picture);
       }
 
-      let status = AccountStatus.Unverified;
-      if (googleUser.verified_email) {
-        status = AccountStatus.Active;
-      } else if (config.account.verificationType === 'automatic') {
-        status = AccountStatus.Active;
-      }
+      const status = canActivate(googleUser)
+        ? AccountStatus.Active
+        : AccountStatus.Unverified;
 
       const newAccount = await database
         .insertInto('accounts')

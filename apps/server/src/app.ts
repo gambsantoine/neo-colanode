@@ -17,7 +17,7 @@ const logger = createLogger('server:app');
 export const initApp = () => {
   const server = fastify({
     bodyLimit: 10 * 1024 * 1024, // 10MB
-    trustProxy: true,
+    trustProxy: config.trustProxy,
   });
 
   server.register(errorHandler);

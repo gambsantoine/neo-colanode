@@ -20,6 +20,7 @@ import {
   generateOtpCode,
   saveOtp,
 } from '@colanode/server/lib/otps';
+import { isOtpAttemptRateLimited } from '@colanode/server/lib/rate-limits';
 import { generateToken } from '@colanode/server/lib/tokens';
 import { createDefaultWorkspace } from '@colanode/server/lib/workspaces';
 import { emailService } from '@colanode/server/services/email-service';
@@ -155,7 +156,6 @@ export const buildLoginVerifyOutput = async (
     otp: otpCode,
     attributes: {
       accountId: account.id,
-      attempts: 0,
     },
   };
 
@@ -181,15 +181,12 @@ export const verifyOtpCode = async (
     return null;
   }
 
+  if (await isOtpAttemptRateLimited(id, config.account.otpTimeout)) {
+    await deleteOtp(id);
+    return null;
+  }
+
   if (otp.otp !== otpCode) {
-    if (otp.attributes.attempts >= 3) {
-      await deleteOtp(id);
-      return null;
-    }
-
-    otp.attributes.attempts++;
-
-    await saveOtp(id, otp);
     return null;
   }
 
