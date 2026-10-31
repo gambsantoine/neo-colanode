@@ -111,18 +111,6 @@ export const workspaceToolsMermaidRouteMask = createRouteMask({
   },
 });
 
-export const workspaceToolsDrawioRouteMask = createRouteMask({
-  routeTree: routeTree,
-  from: '/workspace/$userId/tools/drawio',
-  to: '/$workspaceId/tools/drawio',
-  params: (ctx) => {
-    const workspace = collections.workspaces.get(ctx.userId);
-    return {
-      workspaceId: workspace?.workspaceId ?? 'unknown',
-    };
-  },
-});
-
 export const workspaceToolsJsonRouteMask = createRouteMask({
   routeTree: routeTree,
   from: '/workspace/$userId/tools/json',
@@ -231,7 +219,6 @@ export const routeMasks = [
   workspaceDownloadsRouteMask,
   workspaceToolsPlantUmlRouteMask,
   workspaceToolsMermaidRouteMask,
-  workspaceToolsDrawioRouteMask,
   workspaceToolsJsonRouteMask,
   workspaceToolsQrCodeRouteMask,
   workspaceToolsPasswordRouteMask,

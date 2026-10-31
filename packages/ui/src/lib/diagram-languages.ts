@@ -2,7 +2,6 @@ import {
   DiagramSnippetGroup,
   DiagramTemplate,
 } from '@colanode/ui/lib/diagram-snippets';
-import { DRAWIO_FILE_EXTENSION, renderDrawio } from '@colanode/ui/lib/drawio';
 import {
   DEFAULT_MERMAID_CODE,
   MERMAID_FILE_EXTENSION,
@@ -23,11 +22,10 @@ import {
 } from '@colanode/ui/lib/plantuml-snippets';
 import { ToolPath } from '@colanode/ui/lib/tools';
 
-export type DiagramLanguageId = 'plantuml' | 'mermaid' | 'drawio';
+export type DiagramLanguageId = 'plantuml' | 'mermaid';
 
-// Everything the diagram editors need to know about a diagram language. The
-// dialogs and the file preview are shared by all the languages; text-based
-// ones also share their editor.
+// Everything the diagram editor needs to know about a text-based diagram
+// language. The editor, its dialogs and the file preview are shared.
 export interface DiagramLanguage {
   id: DiagramLanguageId;
   name: string;
@@ -71,23 +69,9 @@ export const mermaidLanguage: DiagramLanguage = {
   render: renderMermaid,
 };
 
-export const drawioLanguage: DiagramLanguage = {
-  id: 'drawio',
-  name: 'draw.io',
-  fileExtension: DRAWIO_FILE_EXTENSION,
-  fileExtensions: [DRAWIO_FILE_EXTENSION, '.drawio', '.dio'],
-  defaultCode: '',
-  commentMarker: '',
-  snippetGroups: [],
-  templates: [],
-  toolPath: 'tools/drawio',
-  render: renderDrawio,
-};
-
 export const diagramLanguages: DiagramLanguage[] = [
   plantUmlLanguage,
   mermaidLanguage,
-  drawioLanguage,
 ];
 
 export const isDiagramFileName = (

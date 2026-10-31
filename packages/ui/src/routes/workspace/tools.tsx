@@ -2,14 +2,12 @@ import { createRoute, redirect } from '@tanstack/react-router';
 
 import { DiagramToolContainer } from '@colanode/ui/components/tools/diagrams/diagram-tool-container';
 import { DiagramToolTab } from '@colanode/ui/components/tools/diagrams/diagram-tool-tab';
-import { DrawioToolContainer } from '@colanode/ui/components/tools/drawio/drawio-tool-container';
 import { JsonToolContainer } from '@colanode/ui/components/tools/json/json-tool-container';
 import { PasswordToolContainer } from '@colanode/ui/components/tools/password/password-tool-container';
 import { PasswordToolTab } from '@colanode/ui/components/tools/password/password-tool-tab';
 import { QrCodeToolContainer } from '@colanode/ui/components/tools/qr-code/qr-code-tool-container';
 import { ToolTab } from '@colanode/ui/components/tools/tool-tab';
 import {
-  drawioLanguage,
   mermaidLanguage,
   plantUmlLanguage,
 } from '@colanode/ui/lib/diagram-languages';
@@ -97,33 +95,6 @@ export const workspaceToolsMermaidMaskRoute = createRoute({
     if (userId) {
       throw redirect({
         to: '/workspace/$userId/tools/mermaid',
-        params: { userId },
-        replace: true,
-      });
-    }
-  },
-});
-
-export const workspaceToolsDrawioRoute = createRoute({
-  getParentRoute: () => workspaceRoute,
-  path: '/tools/drawio',
-  component: DrawioToolContainer,
-  context: () => {
-    return {
-      tab: <DiagramToolTab language={drawioLanguage} />,
-    };
-  },
-});
-
-export const workspaceToolsDrawioMaskRoute = createRoute({
-  getParentRoute: () => workspaceMaskRoute,
-  path: '/tools/drawio',
-  component: () => null,
-  beforeLoad: (ctx) => {
-    const userId = getWorkspaceUserId(ctx.params.workspaceId);
-    if (userId) {
-      throw redirect({
-        to: '/workspace/$userId/tools/drawio',
         params: { userId },
         replace: true,
       });
