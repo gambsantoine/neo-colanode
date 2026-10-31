@@ -2,7 +2,10 @@ import { FastifyPluginCallback } from 'fastify';
 
 import { meRoute } from './me';
 import { ApiRepository } from '../lib/repository';
-import { createApiKeyAuthenticator } from '../plugins/api-key-auth';
+import {
+  ApiClientIpResolver,
+  createApiKeyAuthenticator,
+} from '../plugins/api-key-auth';
 import { createWorkspaceAccessResolver } from '../plugins/workspace-access';
 import { createNodeRoutes } from './workspaces/nodes';
 import { createSpaceRoutes } from './workspaces/spaces';
@@ -12,10 +15,11 @@ import {
 } from './workspaces/workspaces';
 
 export const createApiRoutes = (
-  repository: ApiRepository
+  repository: ApiRepository,
+  getClientIp?: ApiClientIpResolver
 ): FastifyPluginCallback => {
   return (instance, _, done) => {
-    instance.register(createApiKeyAuthenticator(repository));
+    instance.register(createApiKeyAuthenticator(repository, getClientIp));
     instance.register(meRoute);
     instance.register(createWorkspaceCollectionRoutes(repository));
 

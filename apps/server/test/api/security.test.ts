@@ -344,6 +344,31 @@ describe('public api protections', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  it('rate limits the api with the configured client ip header', async () => {
+    const account = await createAccount({ email: 'api-ip@example.com' });
+    const { authorization } = await createApiKey(account.id);
+    const isIpRateLimited = vi
+      .spyOn(apiRepository, 'isIpRateLimited')
+      .mockResolvedValue(false);
+
+    const initialHeader = config.clientIpHeader;
+    config.clientIpHeader = 'cf-connecting-ip';
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/me',
+        remoteAddress: '203.0.113.7',
+        headers: { authorization, 'cf-connecting-ip': '1.2.3.4' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(isIpRateLimited).toHaveBeenCalledWith('1.2.3.4');
+    } finally {
+      config.clientIpHeader = initialHeader;
+    }
+  });
+
   it('rate limits an api key', async () => {
     const account = await createAccount({ email: 'api-limit@example.com' });
     const { authorization } = await createApiKey(account.id);

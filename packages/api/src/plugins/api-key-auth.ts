@@ -1,4 +1,4 @@
-import { FastifyPluginCallback } from 'fastify';
+import { FastifyPluginCallback, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 
 import { ApiErrorCode } from '@colanode/core';
@@ -38,8 +38,11 @@ const parseApiKeyToken = (
   return { apiKeyId, secret };
 };
 
+export type ApiClientIpResolver = (request: FastifyRequest) => string;
+
 export const createApiKeyAuthenticator = (
-  repository: ApiRepository
+  repository: ApiRepository,
+  getClientIp: ApiClientIpResolver = (request) => request.ip
 ): FastifyPluginCallback => {
   const apiKeyAuthenticatorCallback: FastifyPluginCallback = (
     fastify,
@@ -70,7 +73,7 @@ export const createApiKeyAuthenticator = (
         });
       }
 
-      if (await repository.isIpRateLimited(request.ip)) {
+      if (await repository.isIpRateLimited(getClientIp(request))) {
         return reply.code(429).send({
           code: ApiErrorCode.TooManyRequests,
           message: 'Too many requests. Please try again later.',
