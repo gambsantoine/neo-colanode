@@ -75,7 +75,7 @@ const createOtp = async (accountId: string, code = '123456') => {
     id,
     expiresAt: new Date(Date.now() + 60_000).toISOString(),
     otp: code,
-    attributes: { accountId },
+    attributes: { accountId, purpose: 'password_reset' },
   });
 
   return id;

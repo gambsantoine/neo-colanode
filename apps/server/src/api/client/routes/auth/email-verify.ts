@@ -32,7 +32,11 @@ export const emailVerifyRoute: FastifyPluginCallbackZod = (
     },
     handler: async (request, reply) => {
       const input = request.body;
-      const accountId = await verifyOtpCode(input.id, input.otp);
+      const accountId = await verifyOtpCode(
+        input.id,
+        input.otp,
+        'email_verify'
+      );
 
       if (!accountId) {
         return reply.code(400).send({

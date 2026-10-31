@@ -74,6 +74,7 @@ export const emailPasswordResetInitRoute: FastifyPluginCallbackZod = (
         otp: otpCode,
         attributes: {
           accountId: account.id,
+          purpose: 'password_reset',
         },
       };
 

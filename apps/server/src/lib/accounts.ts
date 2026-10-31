@@ -35,6 +35,8 @@ import { ClientContext } from '@colanode/server/types/api';
 import { DeviceType } from '@colanode/server/types/devices';
 import {
   Otp,
+  AccountOtpAttributes,
+  AccountOtpPurpose,
   AccountVerifyOtpAttributes,
   AccountPasswordResetOtpAttributes,
 } from '@colanode/server/types/otps';
@@ -157,6 +159,7 @@ export const buildLoginVerifyOutput = async (
     otp: otpCode,
     attributes: {
       accountId: account.id,
+      purpose: 'email_verify',
     },
   };
 
@@ -203,9 +206,10 @@ export const isAccountInvited = async (accountId: string): Promise<boolean> => {
 
 export const verifyOtpCode = async (
   id: string,
-  otpCode: string
+  otpCode: string,
+  purpose: AccountOtpPurpose
 ): Promise<string | null> => {
-  const otp = await fetchOtp<AccountVerifyOtpAttributes>(id);
+  const otp = await fetchOtp<AccountOtpAttributes>(id);
   if (!otp) {
     return null;
   }
@@ -215,7 +219,8 @@ export const verifyOtpCode = async (
     return null;
   }
 
-  if (otp.otp !== otpCode) {
+  // A code only opens the flow it was sent for.
+  if (otp.attributes.purpose !== purpose || otp.otp !== otpCode) {
     return null;
   }
 
