@@ -35,7 +35,11 @@ export const emailPasswordResetCompleteRoute: FastifyPluginCallbackZod = (
     },
     handler: async (request, reply) => {
       const input = request.body;
-      const accountId = await verifyOtpCode(input.id, input.otp);
+      const accountId = await verifyOtpCode(
+        input.id,
+        input.otp,
+        'password_reset'
+      );
 
       if (!accountId) {
         return reply.code(400).send({

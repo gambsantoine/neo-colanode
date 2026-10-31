@@ -13,7 +13,10 @@ export const apiRoutes: FastifyPluginCallback = (instance, _, done) => {
   instance.register(homeRoute, { prefix });
   instance.register(configGetRoute, { prefix });
   instance.register(clientRoutes, { prefix: `${prefix}/client/v1` });
-  instance.register(createApiRoutes(apiRepository), { prefix: `${prefix}/api` });
+  instance.register(
+    createApiRoutes(apiRepository, (request) => request.client.ip),
+    { prefix: `${prefix}/api` }
+  );
 
   done();
 };

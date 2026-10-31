@@ -191,14 +191,23 @@ describe('registration of manual accounts', () => {
 });
 
 describe('activation through the password reset', () => {
-  const reset = async (accountId: string) => {
+  const createOtp = async (
+    accountId: string,
+    purpose: 'email_verify' | 'password_reset'
+  ) => {
     const id = generateId(IdType.OtpCode);
     await saveOtp(id, {
       id,
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
       otp: '123456',
-      attributes: { accountId },
+      attributes: { accountId, purpose },
     });
+
+    return id;
+  };
+
+  const reset = async (accountId: string) => {
+    const id = await createOtp(accountId, 'password_reset');
 
     return app.inject({
       method: 'POST',
@@ -229,6 +238,57 @@ describe('activation through the password reset', () => {
     expect(response.statusCode).toBe(200);
     const updated = await accountByEmail('legacy@example.com');
     expect(updated?.status).toBe(AccountStatus.Unverified);
+  });
+
+  it('does not accept a reset code on the email verification', async () => {
+    const account = await createAccount({
+      email: 'legacy-verify@example.com',
+      status: AccountStatus.Unverified,
+    });
+    const id = await createOtp(account.id, 'password_reset');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/client/v1/auth/email/verify',
+      payload: { id, otp: '123456' },
+    });
+
+    expect(response.statusCode).toBe(400);
+    const updated = await accountByEmail('legacy-verify@example.com');
+    expect(updated?.status).toBe(AccountStatus.Unverified);
+  });
+
+  it('does not accept a verification code on the password reset', async () => {
+    const account = await createAccount({
+      email: 'verify-reset@example.com',
+    });
+    const id = await createOtp(account.id, 'email_verify');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/client/v1/auth/email/password-reset/complete',
+      payload: { id, otp: '123456', password: PASSWORD },
+    });
+
+    expect(response.statusCode).toBe(400);
+  });
+
+  it('still accepts a verification code on the email verification', async () => {
+    const account = await createAccount({
+      email: 'verify-ok@example.com',
+      status: AccountStatus.Unverified,
+    });
+    const id = await createOtp(account.id, 'email_verify');
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/client/v1/auth/email/verify',
+      payload: { id, otp: '123456' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const updated = await accountByEmail('verify-ok@example.com');
+    expect(updated?.status).toBe(AccountStatus.Active);
   });
 });
 
