@@ -44,6 +44,33 @@ export const isAuthEmailRateLimited = async (
   });
 };
 
+// Counted before comparing the code, so parallel guesses cannot share an attempt.
+export const isOtpAttemptRateLimited = async (
+  otpId: string,
+  window: number
+): Promise<boolean> => {
+  return await isRateLimited(`ot:${otpId}`, {
+    limit: 4,
+    window,
+  });
+};
+
+export const isApiIpRateLimited = async (ip: string): Promise<boolean> => {
+  return await isRateLimited(`pi:${ip}`, {
+    limit: 600,
+    window: 60, // 1 minute
+  });
+};
+
+export const isApiKeyRateLimited = async (
+  apiKeyId: string
+): Promise<boolean> => {
+  return await isRateLimited(`pk:${apiKeyId}`, {
+    limit: 300,
+    window: 60, // 1 minute
+  });
+};
+
 export const isDeviceApiRateLimited = async (
   deviceId: string
 ): Promise<boolean> => {

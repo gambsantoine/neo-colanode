@@ -52,6 +52,21 @@ export const isValidUrl = (url: string) => {
   }
 };
 
+const SAFE_EXTERNAL_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:'];
+
+/**
+ * URLs written by other users can only be opened through this check: without
+ * it `javascript:` runs in the app origin on the web, and any scheme reaches
+ * the handlers registered on the operating system on the desktop.
+ */
+export const isSafeExternalUrl = (url: string) => {
+  try {
+    return SAFE_EXTERNAL_PROTOCOLS.includes(new URL(url).protocol);
+  } catch {
+    return false;
+  }
+};
+
 const emailRegex =
   /^[-!#$%&'*+/0-9=?A-Z^_a-z`{|}~](\.?[-!#$%&'*+/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/;
 export const isValidEmail = (email: string) => {

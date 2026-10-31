@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 
 import { collections } from '@colanode/ui/collections';
 import { useTabManager } from '@colanode/ui/contexts/tab-manager';
+import { getRouteTab } from '@colanode/ui/lib/route-tab';
 import { cn } from '@colanode/ui/lib/utils';
 
 interface TabsHeaderItemProps {
@@ -37,18 +38,10 @@ export const TabsHeaderItem = ({
 
   const location = tabQuery.data[0]!.location;
 
-  const tabComponent = useMemo(() => {
-    const router = tabManager.getRouter(id);
-    const matches = router.matchRoutes(location);
-    for (let i = matches.length - 1; i >= 0; i--) {
-      const match = matches[i];
-      if (match?.context && 'tab' in match.context) {
-        return match.context.tab;
-      }
-    }
-
-    return null;
-  }, [id, location]);
+  const tabComponent = useMemo(
+    () => getRouteTab(tabManager.getRouter(id), location),
+    [id, location]
+  );
 
   return (
     <div

@@ -2,6 +2,7 @@ import * as Comlink from 'comlink';
 import { createRoot } from 'react-dom/client';
 
 import { eventBus } from '@colanode/client/lib';
+import { isSafeExternalUrl } from '@colanode/core';
 import type { ExportToPdfResult } from '@colanode/ui';
 import { BrowserNotSupported } from '@colanode/web/components/browser-not-supported';
 import { MobileNotSupported } from '@colanode/web/components/mobile-not-supported';
@@ -128,7 +129,9 @@ const initializeApp = async () => {
       return workerApi.unsubscribeQuery(queryId);
     },
     openExternalUrl: async (url) => {
-      window.open(url, '_blank');
+      if (isSafeExternalUrl(url)) {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
     },
     showItemInFolder: async () => {
       // No-op on web

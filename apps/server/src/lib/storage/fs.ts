@@ -1,4 +1,5 @@
 import { createReadStream, createWriteStream, promises as fs } from 'fs';
+import { resolve, sep } from 'path';
 import { Readable } from 'stream';
 
 import { FileStore } from '@tus/file-store';
@@ -9,9 +10,12 @@ import type {
   FileStorageProviderConfig,
   TusConfig,
 } from '@colanode/server/lib/config/storage';
+import { createLogger } from '@colanode/server/lib/logger';
 import { RedisKvStore } from '@colanode/server/lib/storage/tus/redis-kv';
 
 import type { Storage } from './core';
+
+const logger = createLogger('server:storage:fs');
 
 export class FileSystemStorage implements Storage {
   private readonly directory: string;
@@ -32,11 +36,26 @@ export class FileSystemStorage implements Storage {
     return this.store;
   }
 
+  // Stored paths come from the database and may predate path validation.
+  private resolvePath(path: string): string | null {
+    const root = resolve(this.directory);
+    const fullPath = resolve(root, path);
+    return fullPath.startsWith(root + sep) ? fullPath : null;
+  }
+
+  private requirePath(path: string): string {
+    const fullPath = this.resolvePath(path);
+    if (!fullPath) {
+      throw new Error('Path is outside of the storage directory');
+    }
+
+    return fullPath;
+  }
+
   async download(
     path: string
   ): Promise<{ stream: Readable; contentType?: string }> {
-    const fullPath = `${this.directory}/${path}`;
-    const stream = createReadStream(fullPath);
+    const stream = createReadStream(this.requirePath(path));
 
     return {
       stream,
@@ -45,7 +64,13 @@ export class FileSystemStorage implements Storage {
   }
 
   async delete(path: string): Promise<void> {
-    const fullPath = `${this.directory}/${path}`;
+    const fullPath = this.resolvePath(path);
+    if (!fullPath) {
+      // Not an error: cleanup jobs must still be able to drop the upload row.
+      logger.warn({ path }, 'Ignored delete outside of the storage directory');
+      return;
+    }
+
     await fs.unlink(fullPath);
   }
 
@@ -55,8 +80,8 @@ export class FileSystemStorage implements Storage {
     _contentType: string,
     _contentLength?: bigint
   ): Promise<void> {
-    const fullPath = `${this.directory}/${path}`;
-    const dirPath = fullPath.substring(0, fullPath.lastIndexOf('/'));
+    const fullPath = this.requirePath(path);
+    const dirPath = fullPath.substring(0, fullPath.lastIndexOf(sep));
     await fs.mkdir(dirPath, { recursive: true });
 
     if (data instanceof Buffer) {

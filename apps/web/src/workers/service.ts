@@ -18,8 +18,14 @@ const fs = new WebFileSystem();
 self.__WB_DISABLE_DEV_LOGS = true;
 precacheAndRoute(self.__WB_MANIFEST);
 
+// Paths of the Vite dev server: their content changes with the dependencies,
+// so a cached copy breaks the app after an update.
+const DEV_SERVER_PATHS = ['/node_modules/', '/src/', '/@'];
+
 registerRoute(
-  ({ url }) => url.origin === self.location.origin,
+  ({ url }) =>
+    url.origin === self.location.origin &&
+    !DEV_SERVER_PATHS.some((path) => url.pathname.startsWith(path)),
   new StaleWhileRevalidate({
     cacheName: 'same-origin-assets',
   })

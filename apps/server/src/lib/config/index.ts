@@ -32,6 +32,16 @@ const configSchema = z.object({
     .default('standalone')
     .transform(resolveConfigReference),
   pathPrefix: z.string().optional().transform(resolveOptionalConfigReference),
+  // Addresses of the reverse proxies in front of the server, comma-separated
+  // (IP, CIDR range, or `loopback`, `linklocal` and `uniquelocal`). The default
+  // covers a proxy on a private network, such as the Docker one.
+  trustProxy: z.string().default('loopback,linklocal,uniquelocal'),
+  // Header holding the client IP when an edge proxy sets it and strips
+  // client-supplied values, e.g. "cf-connecting-ip" behind Cloudflare.
+  clientIpHeader: z
+    .string()
+    .optional()
+    .transform(resolveOptionalConfigReference),
   cors: corsSchema,
   account: accountConfigSchema,
   postgres: postgresConfigSchema,

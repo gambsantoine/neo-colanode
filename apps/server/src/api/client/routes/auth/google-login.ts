@@ -16,6 +16,8 @@ import { UpdateAccount } from '@colanode/server/data/schema';
 import {
   buildLoginSuccessOutput,
   buildLoginVerifyOutput,
+  hasAccounts,
+  isAccountInvited,
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
 import { storage } from '@colanode/server/lib/storage';
@@ -46,6 +48,27 @@ interface GoogleUserResponse {
   verified_email: boolean;
   picture?: string | null;
 }
+
+// A verified Google email replaces the email check, not an invitation.
+const canActivate = async (
+  googleUser: GoogleUserResponse,
+  accountId?: string
+): Promise<boolean> => {
+  const { verificationType } = config.account;
+  if (verificationType === 'automatic') {
+    return true;
+  }
+
+  if (!googleUser.verified_email) {
+    return false;
+  }
+
+  if (verificationType === 'email') {
+    return true;
+  }
+
+  return accountId ? await isAccountInvited(accountId) : !(await hasAccounts());
+};
 
 const fetchGoogleToken = async (
   code: string,
@@ -133,6 +156,7 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
       response: {
         200: loginOutputSchema,
         400: apiErrorOutputSchema,
+        403: apiErrorOutputSchema,
         429: apiErrorOutputSchema,
       },
     },
@@ -195,7 +219,7 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
 
         if (
           existingAccount.status !== AccountStatus.Active &&
-          googleUser.verified_email
+          (await canActivate(googleUser, existingAccount.id))
         ) {
           updateAccount.status = AccountStatus.Active;
         }
@@ -223,6 +247,19 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
           });
         }
 
+        if (existingAccount.status !== AccountStatus.Active) {
+          if (config.account.verificationType === 'email') {
+            const output = await buildLoginVerifyOutput(existingAccount);
+            return output;
+          }
+
+          return reply.code(400).send({
+            code: ApiErrorCode.AccountPendingVerification,
+            message:
+              'Account is not verified yet. Contact your administrator to verify your account.',
+          });
+        }
+
         const output = await buildLoginSuccessOutput(
           existingAccount,
           request.client
@@ -231,16 +268,24 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
         return output;
       }
 
+      const status = (await canActivate(googleUser))
+        ? AccountStatus.Active
+        : AccountStatus.Unverified;
+
+      if (
+        config.account.verificationType === 'manual' &&
+        status !== AccountStatus.Active
+      ) {
+        return reply.code(403).send({
+          code: ApiErrorCode.AccountInvitationRequired,
+          message:
+            'Registration is by invitation only. Ask a workspace admin to invite you.',
+        });
+      }
+
       let avatar: string | null = null;
       if (googleUser.picture) {
         avatar = await uploadGooglePictureAsAvatar(googleUser.picture);
-      }
-
-      let status = AccountStatus.Unverified;
-      if (googleUser.verified_email) {
-        status = AccountStatus.Active;
-      } else if (config.account.verificationType === 'automatic') {
-        status = AccountStatus.Active;
       }
 
       const newAccount = await database

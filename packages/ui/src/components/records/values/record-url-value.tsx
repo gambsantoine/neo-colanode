@@ -1,7 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 
 import {
-  isValidUrl,
+  isSafeExternalUrl,
   StringFieldValue,
   UrlFieldAttributes,
 } from '@colanode/core';
@@ -26,7 +26,7 @@ export const RecordUrlValue = ({ field, readOnly }: RecordUrlValueProps) => {
     field,
   });
   const url = value?.value ?? '';
-  const canOpen = url && isValidUrl(url);
+  const canOpen = url && isSafeExternalUrl(url);
 
   return (
     <HoverCard openDelay={300}>

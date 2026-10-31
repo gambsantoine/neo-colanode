@@ -54,6 +54,8 @@ export interface ApiRepository {
     secret: string
   ): Promise<ApiKeyVerifyResult | null>;
   touchApiKeyLastUsed(apiKeyId: string): Promise<void>;
+  isIpRateLimited(ip: string): Promise<boolean>;
+  isApiKeyRateLimited(apiKeyId: string): Promise<boolean>;
 
   listWorkspaces(
     accountId: string,
