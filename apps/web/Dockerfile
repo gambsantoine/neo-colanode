@@ -18,8 +18,9 @@ COPY ../../packages/client/package.json packages/client/package.json
 COPY ../../packages/ui/package.json packages/ui/package.json
 COPY ../../apps/web/package.json apps/web/package.json
 
-# Install dependencies
-RUN npm ci
+# Install dependencies. Install scripts are skipped because better-sqlite3
+# (only used by the scripts workspace) cannot compile on Alpine without Python.
+RUN npm ci --ignore-scripts && npm run postinstall
 
 # Copy source files
 COPY ../../packages/core packages/core
