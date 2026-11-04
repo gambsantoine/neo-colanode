@@ -9,6 +9,7 @@ import {
   ChatNode,
   PageNode,
   SpaceNode,
+  WikiNode,
   MessageNode,
   RecordNode,
 } from '@colanode/core';
@@ -88,6 +89,11 @@ export type LocalMessageNode = MessageNode & LocalNodeBase;
 
 export type LocalSpaceNode = SpaceNode & LocalNodeBase;
 
+export type LocalWikiNode = WikiNode & LocalNodeBase;
+
+// Root containers shown in the sidebar rail (spaces and wikis).
+export type LocalSpaceLikeNode = LocalSpaceNode | LocalWikiNode;
+
 export type LocalNode =
   | LocalCategoryNode
   | LocalChannelNode
@@ -99,4 +105,5 @@ export type LocalNode =
   | LocalPageNode
   | LocalRecordNode
   | LocalMessageNode
-  | LocalSpaceNode;
+  | LocalSpaceNode
+  | LocalWikiNode;

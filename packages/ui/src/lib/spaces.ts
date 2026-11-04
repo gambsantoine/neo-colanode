@@ -1,12 +1,12 @@
 import {
   LocalCategoryNode,
   LocalNode,
-  LocalSpaceNode,
+  LocalSpaceLikeNode,
 } from '@colanode/client/types';
 import { compareString, generateFractionalIndex } from '@colanode/core';
 
 export const sortSpaceChildren = (
-  container: LocalSpaceNode | LocalCategoryNode,
+  container: LocalSpaceLikeNode | LocalCategoryNode,
   children: LocalNode[]
 ) => {
   const sortedById = children.toSorted((a, b) => compareString(a.id, b.id));
@@ -32,7 +32,7 @@ export const sortSpaceChildren = (
  * saved order (e.g. newly created or shared) are appended by id.
  */
 export const sortSpaces = (
-  spaces: LocalSpaceNode[],
+  spaces: LocalSpaceLikeNode[],
   order: string[] | undefined
 ) => {
   const positions = new Map((order ?? []).map((id, index) => [id, index]));

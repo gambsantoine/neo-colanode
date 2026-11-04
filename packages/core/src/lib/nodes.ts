@@ -57,8 +57,14 @@ export const extractNodeRole = (
 export const MAX_NESTED_CONTENT_DEPTH = 3;
 
 export const getNestedContentDepth = (tree: Node[]): number =>
-  tree.filter((node) => node.type !== 'space' && node.type !== 'category')
-    .length;
+  tree.filter(
+    (node) =>
+      node.type !== 'space' && node.type !== 'wiki' && node.type !== 'category'
+  ).length;
+
+// Root containers that hold collaborators and appear in the sidebar.
+export const isSpaceLikeType = (type: string): type is 'space' | 'wiki' =>
+  type === 'space' || type === 'wiki';
 
 export const generateFractionalIndex = (
   previous?: string | null,

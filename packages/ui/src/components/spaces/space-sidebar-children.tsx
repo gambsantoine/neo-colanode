@@ -1,6 +1,6 @@
 import { eq, useLiveQuery } from '@tanstack/react-db';
 
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { hasNodeRole, NodeRole } from '@colanode/core';
 import { CategorySidebarItem } from '@colanode/ui/components/categories/category-sidebar-item';
 import { SpaceSidebarDraggableItem } from '@colanode/ui/components/spaces/space-sidebar-draggable-item';
@@ -8,7 +8,7 @@ import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { sortSpaceChildren } from '@colanode/ui/lib/spaces';
 
 interface SpaceSidebarChildrenProps {
-  space: LocalSpaceNode;
+  space: LocalSpaceLikeNode;
   role: NodeRole | null;
 }
 
@@ -44,6 +44,7 @@ export const SpaceSidebarChildren = ({
               role={role}
               spaceId={space.id}
               previousId={previousId}
+              allowChannels={space.type === 'space'}
             />
           );
         }

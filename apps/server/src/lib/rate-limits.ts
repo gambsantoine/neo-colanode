@@ -88,3 +88,11 @@ export const isDeviceSocketRateLimited = async (
     window: 60, // 1 minute
   });
 };
+
+// Anonymous readers of published wikis (pages, images and assets).
+export const isPublicIpRateLimited = async (ip: string): Promise<boolean> => {
+  return await isRateLimited(`pw:${ip}`, {
+    limit: 600,
+    window: 300, // 5 minutes
+  });
+};

@@ -16,6 +16,7 @@ interface NodeBreadcrumbItemProps {
 export const NodeBreadcrumbItem = ({ node }: NodeBreadcrumbItemProps) => {
   switch (node.type) {
     case 'space':
+    case 'wiki':
       return <SpaceBreadcrumbItem space={node} />;
     case 'channel':
       return <ChannelBreadcrumbItem channel={node} />;

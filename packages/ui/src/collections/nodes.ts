@@ -27,7 +27,7 @@ export const createNodesCollection = (userId: string) => {
               {
                 field: ['type'],
                 operator: 'in',
-                value: ['space', 'chat', 'database', 'channel'],
+                value: ['space', 'wiki', 'chat', 'database', 'channel'],
               },
             ],
             sorts: [],

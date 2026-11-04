@@ -362,7 +362,11 @@ export const createNodeFromMutation = async (
 
   let parentId: string | null = null;
 
-  if (attributes.type !== 'space' && attributes.type !== 'chat') {
+  if (
+    attributes.type !== 'space' &&
+    attributes.type !== 'wiki' &&
+    attributes.type !== 'chat'
+  ) {
     parentId = attributes.parentId;
   }
 

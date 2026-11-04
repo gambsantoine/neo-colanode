@@ -38,7 +38,7 @@ const NodeContent = ({ type, onFullscreen }: NodeContentProps) => {
       actions={<NodeSettings node={data.node} role={data.role} />}
       onFullscreen={onFullscreen}
     >
-      {data.node.type === 'space' && (
+      {(data.node.type === 'space' || data.node.type === 'wiki') && (
         <SpaceContainer space={data.node} role={data.role} />
       )}
       {data.node.type === 'channel' && (

@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useEffect, useId, useMemo, useState } from 'react';
 
 import { LocalPageNode } from '@colanode/client/types';
-import { normalizeTag } from '@colanode/core';
+import { normalizeTag, slugify } from '@colanode/core';
 import { Badge } from '@colanode/ui/components/ui/badge';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 
@@ -18,6 +18,22 @@ export const PageHeader = ({ page, canEdit }: PageHeaderProps) => {
 
   const [title, setTitle] = useState(page.name);
   const [newTag, setNewTag] = useState('');
+  const [slug, setSlug] = useState(page.slug ?? '');
+
+  useEffect(() => {
+    setSlug(page.slug ?? '');
+  }, [page.slug]);
+
+  // Pages of a wiki get a readable address once the wiki is published.
+  const rootQuery = useLiveQuery(
+    (q) =>
+      q
+        .from({ nodes: workspace.collections.nodes })
+        .where(({ nodes }) => eq(nodes.id, page.rootId))
+        .findOne(),
+    [workspace.userId, page.rootId]
+  );
+  const isWikiPage = rootQuery.data?.type === 'wiki';
 
   useEffect(() => {
     setTitle(page.name);
@@ -71,6 +87,18 @@ export const PageHeader = ({ page, canEdit }: PageHeaderProps) => {
     }
   };
 
+  const saveSlug = () => {
+    const value = slugify(slug);
+    const next =
+      value.length > 0 && value !== slugify(page.name) ? value : null;
+    setSlug(next ?? '');
+    if (next !== (page.slug ?? null)) {
+      updatePage((draft) => {
+        draft.slug = next;
+      });
+    }
+  };
+
   const addTag = () => {
     const tag = normalizeTag(newTag);
     setNewTag('');
@@ -103,6 +131,26 @@ export const PageHeader = ({ page, canEdit }: PageHeaderProps) => {
         }}
         className="w-full bg-transparent text-4xl font-bold outline-none placeholder:text-muted-foreground"
       />
+      {isWikiPage && (canEdit || page.slug) && (
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span>Address in the wiki:</span>
+          <span className="font-mono">…/</span>
+          <input
+            value={slug}
+            readOnly={!canEdit}
+            aria-label="Page address in the wiki"
+            placeholder={slugify(page.name) || 'page'}
+            onChange={(event) => setSlug(event.target.value)}
+            onBlur={saveSlug}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.currentTarget.blur();
+              }
+            }}
+            className="w-48 bg-transparent font-mono outline-none placeholder:text-muted-foreground"
+          />
+        </label>
+      )}
       {(canEdit || tags.length > 0) && (
         <div className="flex flex-wrap items-center gap-1.5">
           {tags.map((tag) => (

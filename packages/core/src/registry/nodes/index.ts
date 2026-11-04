@@ -9,6 +9,7 @@ import { MessageAttributes, messageModel } from './message';
 import { PageAttributes, pageModel } from './page';
 import { RecordAttributes, recordModel } from './record';
 import { SpaceAttributes, spaceModel } from './space';
+import { WikiAttributes, wikiModel } from './wiki';
 
 type NodeBase = {
   id: string;
@@ -38,6 +39,8 @@ export type RecordNode = NodeBase & RecordAttributes;
 
 export type SpaceNode = NodeBase & SpaceAttributes;
 
+export type WikiNode = NodeBase & WikiAttributes;
+
 export type MessageNode = NodeBase & MessageAttributes;
 
 export type FileNode = NodeBase & FileAttributes;
@@ -46,6 +49,7 @@ export type NodeType = NodeAttributes['type'];
 
 export type NodeAttributes =
   | SpaceAttributes
+  | WikiAttributes
   | CategoryAttributes
   | DatabaseAttributes
   | ChannelAttributes
@@ -59,6 +63,7 @@ export type NodeAttributes =
 
 export type Node =
   | SpaceNode
+  | WikiNode
   | CategoryNode
   | DatabaseNode
   | DatabaseViewNode
@@ -90,6 +95,8 @@ export const getNodeModel = (type: NodeType) => {
       return recordModel;
     case 'space':
       return spaceModel;
+    case 'wiki':
+      return wikiModel;
     case 'message':
       return messageModel;
     case 'file':

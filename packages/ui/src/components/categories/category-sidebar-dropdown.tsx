@@ -25,10 +25,12 @@ import {
 
 interface CategorySidebarDropdownProps {
   category: LocalCategoryNode;
+  allowChannels?: boolean;
 }
 
 export const CategorySidebarDropdown = ({
   category,
+  allowChannels = true,
 }: CategorySidebarDropdownProps) => {
   const [openCreatePage, setOpenCreatePage] = useState(false);
   const [openCreateChannel, setOpenCreateChannel] = useState(false);
@@ -54,13 +56,15 @@ export const CategorySidebarDropdown = ({
             <StickyNote className="size-4" />
             <span>Add page</span>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => setOpenCreateChannel(true)}
-            className="flex flex-row items-center gap-2 cursor-pointer"
-          >
-            <MessageCircle className="size-4" />
-            <span>Add channel</span>
-          </DropdownMenuItem>
+          {allowChannels && (
+            <DropdownMenuItem
+              onSelect={() => setOpenCreateChannel(true)}
+              className="flex flex-row items-center gap-2 cursor-pointer"
+            >
+              <MessageCircle className="size-4" />
+              <span>Add channel</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onSelect={() => setOpenCreateDatabase(true)}
             className="flex flex-row items-center gap-2 cursor-pointer"

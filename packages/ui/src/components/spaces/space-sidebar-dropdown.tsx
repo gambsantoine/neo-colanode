@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Fragment, useState } from 'react';
 
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { CategoryCreateDialog } from '@colanode/ui/components/categories/category-create-dialog';
 import { ChannelCreateDialog } from '@colanode/ui/components/channels/channel-create-dialog';
 import { DatabaseCreateDialog } from '@colanode/ui/components/databases/database-create-dialog';
@@ -27,7 +27,7 @@ import {
 } from '@colanode/ui/components/ui/dropdown-menu';
 
 interface SpaceSidebarDropdownProps {
-  space: LocalSpaceNode;
+  space: LocalSpaceLikeNode;
 }
 
 export const SpaceSidebarDropdown = ({ space }: SpaceSidebarDropdownProps) => {
@@ -57,13 +57,15 @@ export const SpaceSidebarDropdown = ({ space }: SpaceSidebarDropdownProps) => {
             <StickyNote className="size-4" />
             <span>Add page</span>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => setOpenCreateChannel(true)}
-            className="flex flex-row items-center gap-2 cursor-pointer"
-          >
-            <MessageCircle className="size-4" />
-            <span>Add channel</span>
-          </DropdownMenuItem>
+          {space.type === 'space' && (
+            <DropdownMenuItem
+              onSelect={() => setOpenCreateChannel(true)}
+              className="flex flex-row items-center gap-2 cursor-pointer"
+            >
+              <MessageCircle className="size-4" />
+              <span>Add channel</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem
             onSelect={() => setOpenCreateDatabase(true)}
             className="flex flex-row items-center gap-2 cursor-pointer"
@@ -96,7 +98,9 @@ export const SpaceSidebarDropdown = ({ space }: SpaceSidebarDropdownProps) => {
             className="flex flex-row items-center gap-2 cursor-pointer"
           >
             <Settings className="size-4" />
-            <span>Settings</span>
+            <span>
+              {space.type === 'wiki' ? 'Settings & publication' : 'Settings'}
+            </span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() =>

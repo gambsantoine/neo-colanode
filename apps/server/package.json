@@ -41,6 +41,7 @@
     "@fastify/websocket": "^11.2.0",
     "@google-cloud/storage": "^8.4.0",
     "@node-rs/argon2": "^2.0.2",
+    "@plantuml/core": "^1.2026.9",
     "@redis/client": "^6.3.1",
     "@tus/azure-store": "^2.0.0",
     "@tus/file-store": "^2.1.1",

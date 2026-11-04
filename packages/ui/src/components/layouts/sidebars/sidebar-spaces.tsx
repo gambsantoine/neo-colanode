@@ -1,6 +1,6 @@
 import { eq, useLiveQuery } from '@tanstack/react-db';
 
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { extractNodeRole } from '@colanode/core';
 import { SidebarHeader } from '@colanode/ui/components/layouts/sidebars/sidebar-header';
 import { SpaceSidebarChildren } from '@colanode/ui/components/spaces/space-sidebar-children';
@@ -23,7 +23,7 @@ export const SidebarSpaces = ({ activeSpaceId }: SidebarSpacesProps) => {
     [workspace.userId, activeSpaceId]
   );
 
-  const space = spaceQuery.data as LocalSpaceNode | undefined;
+  const space = spaceQuery.data as LocalSpaceLikeNode | undefined;
   const role = space ? extractNodeRole(space, workspace.userId) : null;
 
   if (!space) {

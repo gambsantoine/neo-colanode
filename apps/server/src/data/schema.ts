@@ -15,6 +15,7 @@ import {
   DocumentType,
   DocumentContent,
   UpdateMergeMetadata,
+  WikiAccess,
 } from '@colanode/core';
 import { AccountAttributes } from '@colanode/server/types/accounts';
 
@@ -323,6 +324,34 @@ interface CounterTable {
   updated_at: ColumnType<Date | null, Date | null, Date | null>;
 }
 
+interface WikiPublicationTable {
+  wiki_id: ColumnType<string, string, never>;
+  workspace_id: ColumnType<string, string, never>;
+  slug: ColumnType<string, string, string>;
+  access: ColumnType<WikiAccess, WikiAccess, WikiAccess>;
+  home_node_id: ColumnType<string | null, string | null, string | null>;
+  link_token_hash: ColumnType<string | null, string | null, string | null>;
+  link_token_salt: ColumnType<string | null, string | null, string | null>;
+  created_at: ColumnType<Date, Date, never>;
+  created_by: ColumnType<string, string, never>;
+  updated_at: ColumnType<Date | null, Date | null, Date | null>;
+  updated_by: ColumnType<string | null, string | null, string | null>;
+}
+
+export type SelectWikiPublication = Selectable<WikiPublicationTable>;
+export type CreateWikiPublication = Insertable<WikiPublicationTable>;
+export type UpdateWikiPublication = Updateable<WikiPublicationTable>;
+
+interface WikiRouteTable {
+  wiki_id: ColumnType<string, string, never>;
+  path: ColumnType<string, string, never>;
+  node_id: ColumnType<string, string, string>;
+  is_current: ColumnType<boolean, boolean, boolean>;
+  created_at: ColumnType<Date, Date, never>;
+}
+
+export type SelectWikiRoute = Selectable<WikiRouteTable>;
+
 export interface DatabaseSchema {
   accounts: AccountTable;
   devices: DeviceTable;
@@ -342,4 +371,6 @@ export interface DatabaseSchema {
   node_embeddings: NodeEmbeddingTable;
   document_embeddings: DocumentEmbeddingTable;
   counters: CounterTable;
+  wiki_publications: WikiPublicationTable;
+  wiki_routes: WikiRouteTable;
 }
