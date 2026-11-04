@@ -138,9 +138,7 @@ export const WikiPublication = ({ wiki, role }: WikiPublicationProps) => {
   if (!isAdmin) {
     return (
       <p className="text-sm text-muted-foreground">
-        {publication
-          ? 'This wiki is published. Only its admins can change how.'
-          : 'Only the admins of this wiki can publish it.'}
+        Only the admins of this wiki can publish it or change how it is shared.
       </p>
     );
   }

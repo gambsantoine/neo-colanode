@@ -555,6 +555,10 @@ export const renderWikiNodeContent = async (
   if (node.type === 'database') {
     databaseIds.add(node.id);
   }
+  // A record page shows the fields of its database (collaborators included).
+  if (node.type === 'record') {
+    databaseIds.add((attributes as { databaseId: string }).databaseId);
+  }
   for (const block of Object.values(document?.content.blocks ?? {})) {
     if (block.type === 'database') {
       databaseIds.add(block.id);
