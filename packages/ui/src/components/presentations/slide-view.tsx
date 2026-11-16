@@ -1,5 +1,6 @@
 import '@colanode/ui/styles/highlight.css';
 import '@colanode/ui/styles/slides.css';
+import '@colanode/ui/styles/slide-code.css';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -8,6 +9,7 @@ import {
   toCssBackground,
   toSafeImageUrl,
 } from '@colanode/ui/lib/slides';
+import { enhanceCodeBlocks } from '@colanode/ui/lib/slides-code';
 import { renderMermaidPlaceholders } from '@colanode/ui/lib/slides-mermaid';
 import { renderSlideMarkdown } from '@colanode/ui/lib/slides-render';
 import { cn } from '@colanode/ui/lib/utils';
@@ -57,7 +59,12 @@ const SlideHtml = ({
       return;
     }
 
-    return renderMermaidPlaceholders(root, dark);
+    const cancelMermaid = renderMermaidPlaceholders(root, dark);
+    const removeCopy = enhanceCodeBlocks(root);
+    return () => {
+      cancelMermaid();
+      removeCopy();
+    };
   }, [html, dark]);
 
   return (

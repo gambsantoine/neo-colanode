@@ -1,0 +1,249 @@
+/* Code blocks of presentations (Slidev and Reveal.js). Colors per token,
+   close to GitHub's light and dark themes. The doubled class outweighs the
+   Reveal.js theme rules (`.reveal pre code`). */
+
+.slide-code.slide-code {
+  --code-bg: #f6f8fa;
+  --code-header-bg: #eaeef2;
+  --code-border: #d0d7de;
+  --code-fg: #1f2328;
+  --code-muted: #59636e;
+  --code-keyword: #cf222e;
+  --code-string: #0a3069;
+  --code-number: #0550ae;
+  --code-function: #8250df;
+  --code-type: #953800;
+  --code-comment: #6e7781;
+  --code-tag: #116329;
+  --code-attr: #0550ae;
+  --code-variable: #953800;
+  --code-addition-fg: #116329;
+  --code-addition-bg: #dafbe1;
+  --code-deletion-fg: #82071e;
+  --code-deletion-bg: #ffebe9;
+
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 8px;
+  color: var(--code-fg);
+  font-family:
+    ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, Consolas, monospace;
+  margin: 0 0 14px;
+  overflow: hidden;
+  text-align: left;
+  text-shadow: none;
+}
+
+.slide-dark .slide-code.slide-code,
+.slide-code-dark .slide-code.slide-code {
+  --code-bg: #0d1117;
+  --code-header-bg: #161b22;
+  --code-border: #30363d;
+  --code-fg: #e6edf3;
+  --code-muted: #8d96a0;
+  --code-keyword: #ff7b72;
+  --code-string: #a5d6ff;
+  --code-number: #79c0ff;
+  --code-function: #d2a8ff;
+  --code-type: #ffa657;
+  --code-comment: #8b949e;
+  --code-tag: #7ee787;
+  --code-attr: #79c0ff;
+  --code-variable: #ffa657;
+  --code-addition-fg: #aff5b4;
+  --code-addition-bg: #033a16;
+  --code-deletion-fg: #ffdcd7;
+  --code-deletion-bg: #67060c;
+}
+
+/* Sizes: Slidev canvas (22px text) and Reveal.js slides (~42px text). */
+.slide .slide-code.slide-code {
+  font-size: 16px;
+}
+
+.reveal .slide-code.slide-code {
+  font-size: 0.5em;
+  margin: var(--r-block-margin, 20px) auto;
+  width: 92%;
+}
+
+.slide-code.slide-code .slide-code-header {
+  align-items: center;
+  background: var(--code-header-bg);
+  border-bottom: 1px solid var(--code-border);
+  display: flex;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75em;
+  gap: 8px;
+  justify-content: space-between;
+  line-height: 1;
+  min-height: 2.2em;
+  padding: 0.35em 0.6em 0.35em 1em;
+}
+
+.slide-code.slide-code .slide-code-language {
+  color: var(--code-muted);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.slide-code.slide-code .slide-code-copy {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--code-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  gap: 0.35em;
+  opacity: 0;
+  padding: 0.3em 0.5em;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
+}
+
+.slide-code.slide-code:hover .slide-code-copy,
+.slide-code.slide-code .slide-code-copy:focus-visible,
+.slide-code.slide-code .slide-code-copy[data-copied='true'] {
+  opacity: 1;
+}
+
+.slide-code.slide-code .slide-code-copy:hover {
+  background: var(--code-bg);
+  border-color: var(--code-border);
+  color: var(--code-fg);
+}
+
+.slide-code.slide-code .slide-code-copy[data-copied='true'] {
+  color: var(--code-tag);
+}
+
+.slide-code.slide-code .slide-code-copy svg {
+  height: 1.1em;
+  width: 1.1em;
+}
+
+.slide-code.slide-code .slide-code-body {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--code-fg);
+  cursor: text;
+  font-family: inherit;
+  font-size: 1em;
+  line-height: 1.55;
+  margin: 0;
+  max-height: 23em;
+  overflow: auto;
+  padding: 0.9em 1.2em;
+  user-select: text;
+  white-space: pre;
+  width: auto;
+}
+
+.slide-code.slide-code .slide-code-body code {
+  background: transparent;
+  display: block;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  white-space: pre;
+}
+
+/* Tokens */
+
+.slide-code.slide-code .hljs-comment,
+.slide-code.slide-code .hljs-quote {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.slide-code.slide-code .hljs-keyword,
+.slide-code.slide-code .hljs-selector-tag,
+.slide-code.slide-code .hljs-doctag,
+.slide-code.slide-code .hljs-meta .hljs-keyword,
+.slide-code.slide-code .hljs-template-tag {
+  color: var(--code-keyword);
+}
+
+.slide-code.slide-code .hljs-string,
+.slide-code.slide-code .hljs-meta .hljs-string,
+.slide-code.slide-code .hljs-regexp,
+.slide-code.slide-code .hljs-char.escape_ {
+  color: var(--code-string);
+}
+
+.slide-code.slide-code .hljs-number,
+.slide-code.slide-code .hljs-literal,
+.slide-code.slide-code .hljs-symbol,
+.slide-code.slide-code .hljs-bullet,
+.slide-code.slide-code .hljs-meta,
+.slide-code.slide-code .hljs-link,
+.slide-code.slide-code .hljs-operator {
+  color: var(--code-number);
+}
+
+.slide-code.slide-code .hljs-title,
+.slide-code.slide-code .hljs-title.function_,
+.slide-code.slide-code .hljs-section {
+  color: var(--code-function);
+}
+
+.slide-code.slide-code .hljs-title.class_,
+.slide-code.slide-code .hljs-title.class_.inherited__,
+.slide-code.slide-code .hljs-type,
+.slide-code.slide-code .hljs-built_in {
+  color: var(--code-type);
+}
+
+.slide-code.slide-code .hljs-variable,
+.slide-code.slide-code .hljs-template-variable,
+.slide-code.slide-code .hljs-variable.language_,
+.slide-code.slide-code .hljs-params {
+  color: var(--code-variable);
+}
+
+.slide-code.slide-code .hljs-attr,
+.slide-code.slide-code .hljs-attribute,
+.slide-code.slide-code .hljs-property,
+.slide-code.slide-code .hljs-selector-class,
+.slide-code.slide-code .hljs-selector-id,
+.slide-code.slide-code .hljs-selector-attr,
+.slide-code.slide-code .hljs-selector-pseudo {
+  color: var(--code-attr);
+}
+
+.slide-code.slide-code .hljs-tag,
+.slide-code.slide-code .hljs-name {
+  color: var(--code-tag);
+}
+
+.slide-code.slide-code .hljs-subst,
+.slide-code.slide-code .hljs-punctuation {
+  color: var(--code-fg);
+}
+
+.slide-code.slide-code .hljs-addition {
+  background: var(--code-addition-bg);
+  color: var(--code-addition-fg);
+}
+
+.slide-code.slide-code .hljs-deletion {
+  background: var(--code-deletion-bg);
+  color: var(--code-deletion-fg);
+}
+
+.slide-code.slide-code .hljs-emphasis {
+  font-style: italic;
+}
+
+.slide-code.slide-code .hljs-strong,
+.slide-code.slide-code .hljs-section {
+  font-weight: 700;
+}

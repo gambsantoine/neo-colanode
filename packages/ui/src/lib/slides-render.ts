@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import { Marked, Tokens } from 'marked';
 
-import { highlightCode } from '@colanode/ui/lib/lowlight';
+import { highlightCode, languages, lowlight } from '@colanode/ui/lib/lowlight';
 
 // Markdown of a slide to sanitized HTML. Slides are shared with every member
 // of the space, so any HTML they hold goes through DOMPurify: scripts, event
@@ -19,15 +19,86 @@ const escapeHtml = (value: string) =>
 // is URI encoded: DOMPurify drops attributes holding `-->`, as in `A-->B`.
 export const MERMAID_PLACEHOLDER_CLASS = 'slide-mermaid';
 
+// Code blocks get a header with the language name; the copy button is added
+// in the browser (see slides-code), as buttons are not allowed in slides.
+export const CODE_BLOCK_CLASS = 'slide-code';
+
+const languageNames = new Map(
+  languages.map((language) => [language.code, language.name])
+);
+
+// lowlight reports aliases as given: the common ones are mapped to the
+// language they stand for.
+const ALIASES: Record<string, string> = {
+  ts: 'typescript',
+  tsx: 'typescript',
+  mts: 'typescript',
+  js: 'javascript',
+  jsx: 'javascript',
+  mjs: 'javascript',
+  cjs: 'javascript',
+  py: 'python',
+  sh: 'bash',
+  zsh: 'bash',
+  console: 'shell',
+  yml: 'yaml',
+  md: 'markdown',
+  rb: 'ruby',
+  rs: 'rust',
+  kt: 'kotlin',
+  cs: 'csharp',
+  'c#': 'csharp',
+  'c++': 'cpp',
+  golang: 'go',
+  docker: 'dockerfile',
+  ps1: 'powershell',
+  jsonc: 'json',
+};
+
+const getLanguageLabel = (
+  requested: string,
+  detected: string | undefined
+): string | null => {
+  if (!requested) {
+    return null;
+  }
+
+  // Highlighted as XML, but better known by their own name.
+  const own: Record<string, string> = { html: 'HTML', svg: 'SVG', vue: 'Vue' };
+  if (own[requested]) {
+    return own[requested];
+  }
+
+  if (!detected) {
+    return requested;
+  }
+
+  return (
+    languageNames.get(ALIASES[detected] ?? detected) ??
+    languageNames.get(ALIASES[requested] ?? requested) ??
+    detected
+  );
+};
+
 const renderCode = ({ text, lang }: Tokens.Code): string => {
-  // Slidev accepts options after the language: ```ts {2-3}
-  const language = (lang ?? '').trim().split(/[\s{]/)[0]?.toLowerCase() ?? '';
+  // Slidev and Reveal.js accept options after the language: ```ts {2-3}
+  const language =
+    (lang ?? '')
+      .trim()
+      .split(/[\s{[]/)[0]
+      ?.toLowerCase() ?? '';
 
   if (language === 'mermaid') {
     return `<div class="${MERMAID_PLACEHOLDER_CLASS}" data-code="${encodeURIComponent(text)}"></div>`;
   }
 
-  const highlighted = highlightCode(text, language || undefined);
+  // Unknown or missing languages are not highlighted: auto detection guesses
+  // wrong too often.
+  const plain = ['', 'text', 'txt', 'plain', 'plaintext'].includes(language);
+  const highlighted =
+    !plain && lowlight.registered(language)
+      ? highlightCode(text, language)
+      : null;
   const body = highlighted
     ? highlighted.nodes
         .map((node) =>
@@ -38,7 +109,12 @@ const renderCode = ({ text, lang }: Tokens.Code): string => {
         .join('')
     : escapeHtml(text);
 
-  return `<pre class="hljs"><code>${body}</code></pre>`;
+  const label = plain
+    ? null
+    : getLanguageLabel(language, highlighted?.language);
+  const header = `<div class="${CODE_BLOCK_CLASS}-header"><span class="${CODE_BLOCK_CLASS}-language">${label ? escapeHtml(label) : ''}</span></div>`;
+
+  return `<div class="${CODE_BLOCK_CLASS}">${header}<pre class="${CODE_BLOCK_CLASS}-body hljs"><code>${body}</code></pre></div>`;
 };
 
 const marked = new Marked({

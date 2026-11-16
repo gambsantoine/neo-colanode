@@ -1,5 +1,6 @@
 import 'reveal.js/reveal.css';
 import '@colanode/ui/styles/highlight.css';
+import '@colanode/ui/styles/slide-code.css';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Reveal from 'reveal.js';
@@ -13,6 +14,7 @@ import {
   getRevealThemeClass,
   loadRevealTheme,
 } from '@colanode/ui/lib/reveal-themes';
+import { enhanceCodeBlocks } from '@colanode/ui/lib/slides-code';
 import { renderMermaidPlaceholders } from '@colanode/ui/lib/slides-mermaid';
 import { cn } from '@colanode/ui/lib/utils';
 
@@ -179,7 +181,12 @@ export const RevealView = ({
       return;
     }
 
-    return renderMermaidPlaceholders(element, deck.dark);
+    const cancelMermaid = renderMermaidPlaceholders(element, deck.dark);
+    const removeCopy = enhanceCodeBlocks(element);
+    return () => {
+      cancelMermaid();
+      removeCopy();
+    };
   }, [html, deck.dark, ready]);
 
   // Reveal only listens to window resizes.
@@ -200,6 +207,7 @@ export const RevealView = ({
       className={cn(
         'reveal-viewport relative h-full w-full overflow-hidden',
         getRevealThemeClass(theme),
+        deck.dark ? 'slide-code-dark' : 'slide-code-light',
         themeLoaded !== theme && 'invisible',
         className
       )}

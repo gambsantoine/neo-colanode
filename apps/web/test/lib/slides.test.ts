@@ -148,6 +148,32 @@ describe('lib/slides-render', () => {
     expect(html).toContain('rel="noopener noreferrer"');
   });
 
+  it('labels code blocks with the language name', () => {
+    const ts = renderSlideMarkdown('```ts\nconst a = 1;\n```');
+    expect(ts).toContain('<div class="slide-code">');
+    expect(ts).toContain('<span class="slide-code-language">TypeScript</span>');
+
+    const html = renderSlideMarkdown('```html\n<p>Hi</p>\n```');
+    expect(html).toContain('>HTML</span>');
+    expect(html).toContain('hljs-tag');
+  });
+
+  it('keeps plain and unknown languages unhighlighted', () => {
+    const plain = renderSlideMarkdown('```\nconst a = 1;\n```');
+    expect(plain).not.toContain('hljs-');
+    expect(plain).toContain('<span class="slide-code-language"></span>');
+
+    const unknown = renderSlideMarkdown('```foobar\nconst a = 1;\n```');
+    expect(unknown).not.toContain('hljs-');
+    expect(unknown).toContain('>foobar</span>');
+  });
+
+  it('escapes code', () => {
+    const html = renderSlideMarkdown('```js\nconst a = "<script>";\n```');
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+  });
+
   it('highlights code and defers mermaid blocks', () => {
     const code = renderSlideMarkdown('```ts {2}\nconst a = 1;\n```');
     expect(code).toContain('hljs-keyword');

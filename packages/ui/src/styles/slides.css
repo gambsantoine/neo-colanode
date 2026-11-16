@@ -124,17 +124,7 @@
   padding: 2px 6px;
 }
 
-.slide-content pre {
-  background: var(--slide-code-bg);
-  border-radius: 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 17px;
-  line-height: 1.5;
-  margin: 0 0 14px;
-  overflow: hidden;
-  padding: 16px 20px;
-  white-space: pre;
-}
+/* Code blocks: see slide-code.css */
 
 .slide-content table {
   border-collapse: collapse;
