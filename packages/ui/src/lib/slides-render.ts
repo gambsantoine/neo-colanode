@@ -80,7 +80,8 @@ const getLanguageLabel = (
   );
 };
 
-const renderCode = ({ text, lang }: Tokens.Code): string => {
+// A code block (language name, highlighting, copy button added later).
+export const renderCodeBlock = (text: string, lang?: string | null): string => {
   // Slidev and Reveal.js accept options after the language: ```ts {2-3}
   const language =
     (lang ?? '')
@@ -117,6 +118,9 @@ const renderCode = ({ text, lang }: Tokens.Code): string => {
   return `<div class="${CODE_BLOCK_CLASS}">${header}<pre class="${CODE_BLOCK_CLASS}-body hljs"><code>${body}</code></pre></div>`;
 };
 
+const renderCode = ({ text, lang }: Tokens.Code): string =>
+  renderCodeBlock(text, lang);
+
 const marked = new Marked({
   gfm: true,
   breaks: false,
@@ -152,9 +156,24 @@ const installHooks = () => {
 export const markdownToHtml = (markdown: string): string =>
   marked.parse(markdown, { async: false }) as string;
 
-export const sanitizeSlideHtml = (html: string): string => {
+// Reveal.js HTML decks rely on styles (`style=`, `<style>`): they are kept,
+// as slides are rendered in their own frame. Scripts never are.
+const PURIFY_CONFIG_WITH_STYLES = {
+  FORBID_TAGS: ['form', 'input', 'button', 'textarea', 'select'],
+  ADD_ATTR: ['target'],
+  // Keeps a <style> placed before any content.
+  FORCE_BODY: true,
+};
+
+export const sanitizeSlideHtml = (
+  html: string,
+  options: { allowStyles?: boolean } = {}
+): string => {
   installHooks();
-  return DOMPurify.sanitize(html, PURIFY_CONFIG) as string;
+  return DOMPurify.sanitize(
+    html,
+    options.allowStyles ? PURIFY_CONFIG_WITH_STYLES : PURIFY_CONFIG
+  ) as string;
 };
 
 const CACHE_LIMIT = 200;

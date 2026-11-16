@@ -5,6 +5,7 @@ import {
 } from '@colanode/ui/lib/slides';
 import {
   markdownToHtml,
+  renderCodeBlock,
   sanitizeSlideHtml,
 } from '@colanode/ui/lib/slides-render';
 
@@ -73,15 +74,23 @@ export interface RevealSlide {
   v: number;
   // 0-based line of the source where the slide starts.
   startLine: number;
+  // Markdown, or the inner HTML of the <section> for HTML decks.
+  kind: 'markdown' | 'html';
   content: string;
   notes: string | null;
+  // Attributes of the <section> (HTML decks), already filtered.
+  attributes?: Array<[string, string]>;
 }
 
 export interface RevealDeck {
+  // Reveal.js decks are written in Markdown or in HTML (<section>).
+  source: 'markdown' | 'html';
   title: string | null;
   config: RevealConfig;
   dark: boolean;
   slides: RevealSlide[];
+  // <style> elements of an HTML document.
+  styles: string;
 }
 
 export const DEFAULT_REVEAL_CONTENT = `---
@@ -170,6 +179,151 @@ const splitNotes = (
   };
 };
 
+// HTML decks: a whole Reveal.js page or only its <section> elements.
+const HTML_SECTION = /<section[\s>]/i;
+
+export const isHtmlSource = (text: string): boolean => {
+  const trimmed = text.trimStart();
+  return (
+    /^<!doctype html|^<html[\s>]/i.test(trimmed) ||
+    (trimmed.startsWith('<') && HTML_SECTION.test(trimmed))
+  );
+};
+
+const dedent = (text: string): string => {
+  const lines = text.replace(/^\n+|\s+$/g, '').split('\n');
+  const indent = Math.min(
+    ...lines
+      .filter((line) => line.trim())
+      .map((line) => /^\s*/.exec(line)![0].length)
+  );
+  return lines.map((line) => line.slice(indent)).join('\n');
+};
+
+const parseRevealHtml = (
+  lines: string[],
+  first: number,
+  options: Record<string, unknown>
+): RevealDeck => {
+  const text = lines.join('\n');
+  const doc = new DOMParser().parseFromString(text, 'text/html');
+
+  // Line of each <section> of the source, in document order.
+  const sectionLines: number[] = [];
+  const opening = /<section[\s>]/gi;
+  for (const match of text.matchAll(opening)) {
+    sectionLines.push(
+      first + text.slice(0, match.index).split('\n').length - 1
+    );
+  }
+
+  const allSections = Array.from(doc.querySelectorAll('section'));
+  const lineOf = (element: Element) =>
+    sectionLines[allSections.indexOf(element as HTMLElement)] ?? first;
+
+  // Theme of a full page: <link href=".../theme/black.css">.
+  const themeLink = Array.from(doc.querySelectorAll('link[href]'))
+    .map((link) => /theme\/([\w-]+)\.css/.exec(link.getAttribute('href') ?? ''))
+    .find(Boolean);
+  const pageOptions: Record<string, unknown> = { ...options };
+  if (pageOptions.theme === undefined && themeLink) {
+    pageOptions.theme = themeLink[1];
+  }
+
+  const pageTitle = doc.querySelector('title')?.textContent?.trim();
+  if (pageOptions.title === undefined && pageTitle) {
+    pageOptions.title = pageTitle;
+  }
+
+  const root =
+    doc.querySelector('.reveal .slides') ??
+    doc.querySelector('.slides') ??
+    doc.body;
+  const children = (element: Element) =>
+    Array.from(element.children).filter((child) => child.tagName === 'SECTION');
+
+  const slides: RevealSlide[] = [];
+  const pushSlide = (section: Element, h: number, v: number) => {
+    const startLine = lineOf(section);
+    const attributes = readSectionAttributes(section);
+
+    // <section data-markdown><textarea data-template>...</textarea>
+    if (section.hasAttribute('data-markdown')) {
+      const template = section.querySelector(
+        'textarea[data-template], script[type="text/template"]'
+      );
+      const markdown = dedent(template?.textContent ?? '');
+      const { content, notes } = splitNotes(markdown.split('\n'));
+      slides.push({
+        index: slides.length,
+        h,
+        v,
+        startLine,
+        kind: 'markdown',
+        content,
+        notes,
+        attributes,
+      });
+      return;
+    }
+
+    const clone = section.cloneNode(true) as Element;
+    const aside = clone.querySelector('aside.notes');
+    const notes = aside?.textContent?.trim() || null;
+    aside?.remove();
+
+    slides.push({
+      index: slides.length,
+      h,
+      v,
+      startLine,
+      kind: 'html',
+      content: clone.innerHTML.trim(),
+      notes,
+      attributes,
+    });
+  };
+
+  children(root).forEach((section, h) => {
+    const stack = children(section);
+    if (stack.length === 0) {
+      pushSlide(section, h, 0);
+    } else {
+      stack.forEach((child, v) => pushSlide(child, h, v));
+    }
+  });
+
+  if (slides.length === 0) {
+    slides.push({
+      index: 0,
+      h: 0,
+      v: 0,
+      startLine: first,
+      kind: 'html',
+      content: '',
+      notes: null,
+    });
+  }
+
+  const config = toConfig(pageOptions);
+  const title =
+    typeof pageOptions.title === 'string' && pageOptions.title.trim()
+      ? pageOptions.title.trim()
+      : null;
+  const styles = Array.from(doc.querySelectorAll('style'))
+    .map((style) => style.textContent ?? '')
+    .join('\n');
+
+  return {
+    source: 'html',
+    title,
+    config,
+    dark: DARK_THEMES.has(config.theme),
+    slides,
+    styles,
+  };
+};
+
 export const parseRevealDeck = (source: string): RevealDeck => {
   const lines = source.replace(/\r\n?/g, '\n').split('\n');
 
@@ -190,6 +344,10 @@ export const parseRevealDeck = (source: string): RevealDeck => {
   }
 
   const body = lines.slice(first);
+  if (isHtmlSource(body.join('\n'))) {
+    return parseRevealHtml(body, first, options);
+  }
+
   const separators = findLinesOutsideCode(
     body,
     (line) => HORIZONTAL.test(line) || VERTICAL.test(line)
@@ -203,7 +361,15 @@ export const parseRevealDeck = (source: string): RevealDeck => {
 
   const push = (end: number) => {
     const { content, notes } = splitNotes(body.slice(start, end));
-    slides.push({ index: slides.length, h, v, startLine, content, notes });
+    slides.push({
+      index: slides.length,
+      h,
+      v,
+      startLine,
+      kind: 'markdown',
+      content,
+      notes,
+    });
   };
 
   for (const separator of separators) {
@@ -234,10 +400,12 @@ export const parseRevealDeck = (source: string): RevealDeck => {
       : null;
 
   return {
+    source: 'markdown',
     title,
     config,
     dark: DARK_THEMES.has(config.theme),
     slides,
+    styles: '',
   };
 };
 
@@ -301,6 +469,34 @@ const parseAttributes = (
 
   return result;
 };
+
+// Attributes of a <section> written in HTML. Styles are kept: the slides
+// are rendered in their own frame.
+const HTML_SLIDE_ATTRIBUTES: Record<string, (value: string) => boolean> = {
+  ...SLIDE_ATTRIBUTES,
+  id: (value) => KEYWORDS.test(value),
+  style: () => true,
+  'data-state': (value) => KEYWORDS.test(value),
+  'data-auto-animate-id': (value) => KEYWORDS.test(value),
+  'data-auto-animate-easing': (value) => KEYWORDS.test(value),
+  'data-auto-animate-duration': (value) => NUMBER.test(value),
+  'data-auto-animate-delay': (value) => NUMBER.test(value),
+  'data-auto-animate-restart': () => true,
+  'data-background-video': () => false,
+  'data-background-iframe': () => false,
+};
+
+function readSectionAttributes(section: Element): Array<[string, string]> {
+  const result: Array<[string, string]> = [];
+  for (const { name, value } of Array.from(section.attributes)) {
+    const check = HTML_SLIDE_ATTRIBUTES[name.toLowerCase()];
+    if (check && check(value.trim())) {
+      result.push([name.toLowerCase(), value.trim()]);
+    }
+  }
+
+  return result;
+}
 
 const SLIDE_COMMENT = /^\s*\.slide:([\s\S]*)$/;
 const ELEMENT_COMMENT = /^\s*\.element:([\s\S]*)$/;
@@ -383,8 +579,36 @@ export const renderRevealSlide = (markdown: string): RenderedSlide => {
   };
 };
 
+// HTML of a slide written in HTML: code blocks get the same rendering as in
+// Markdown (highlighting, language, copy button).
+export const renderRevealHtmlSlide = (html: string): string => {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+
+  template.content.querySelectorAll('pre > code').forEach((code) => {
+    const pre = code.parentElement!;
+    const language =
+      /(?:^|\s)(?:language|lang)-([\w#+-]+)/.exec(code.className)?.[1] ?? '';
+    let text = code.textContent ?? '';
+    if (code.hasAttribute('data-trim') || pre.hasAttribute('data-trim')) {
+      text = dedent(text);
+    }
+
+    const block = document.createElement('template');
+    block.innerHTML = renderCodeBlock(text, language);
+    pre.replaceWith(block.content);
+  });
+
+  return sanitizeSlideHtml(template.innerHTML, { allowStyles: true });
+};
+
 const renderSection = (slide: RevealSlide): string => {
-  const { html, attributes } = renderRevealSlide(slide.content);
+  const rendered =
+    slide.kind === 'html'
+      ? { html: renderRevealHtmlSlide(slide.content), attributes: [] }
+      : renderRevealSlide(slide.content);
+  const attributes = [...(slide.attributes ?? []), ...rendered.attributes];
+  const html = rendered.html;
   const attributeText = attributes
     .map(([name, value]) => ` ${name}="${escapeAttribute(value)}"`)
     .join('');
@@ -396,13 +620,14 @@ const CACHE_LIMIT = 300;
 const sectionCache = new Map<string, string>();
 
 const renderSectionCached = (slide: RevealSlide): string => {
-  const cached = sectionCache.get(slide.content);
+  const key = `${slide.kind}\u0000${JSON.stringify(slide.attributes ?? [])}\u0000${slide.content}`;
+  const cached = sectionCache.get(key);
   if (cached !== undefined) {
     return cached;
   }
 
   const section = renderSection(slide);
-  sectionCache.set(slide.content, section);
+  sectionCache.set(key, section);
   if (sectionCache.size > CACHE_LIMIT) {
     const oldest = sectionCache.keys().next().value;
     if (oldest !== undefined) {
@@ -431,6 +656,11 @@ export const buildRevealSlidesHtml = (deck: RevealDeck): string => {
     )
     .join('');
 
+  // Styles of an HTML page apply to the whole deck.
+  const styles = deck.styles ? `<style>${deck.styles}</style>` : '';
+
   // Each section is already sanitized: this pass only guards the assembly.
-  return sanitizeSlideHtml(html);
+  return sanitizeSlideHtml(styles + html, {
+    allowStyles: deck.source === 'html',
+  });
 };

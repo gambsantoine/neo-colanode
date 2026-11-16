@@ -56,16 +56,15 @@ type PresentationLayout = 'editor' | 'split' | 'preview';
 
 const SAVE_DELAY_MS = 400;
 const MAX_IMPORT_SIZE = 2 * 1024 * 1024;
-const IMPORT_ACCEPT = '.md,.markdown,.txt,text/markdown,text/plain';
+const IMPORT_ACCEPT =
+  '.md,.markdown,.txt,.html,.htm,text/markdown,text/plain,text/html';
 
 const isTextFile = (file: File) =>
-  /\.(md|markdown|txt)$/i.test(file.name) ||
-  file.type === 'text/markdown' ||
-  file.type === 'text/plain';
+  /\.(md|markdown|txt|html?)$/i.test(file.name) ||
+  ['text/markdown', 'text/plain', 'text/html'].includes(file.type);
 
-const toFileName = (name: string) =>
-  (name.trim() || 'presentation').replace(/[\\/:*?"<>|]+/g, '-') +
-  SLIDES_FILE_EXTENSION;
+const toFileName = (name: string, extension: string) =>
+  (name.trim() || 'presentation').replace(/[\\/:*?"<>|]+/g, '-') + extension;
 
 interface PresentationContainerProps {
   presentation: LocalPresentationNode;
@@ -167,6 +166,7 @@ export const PresentationContainer = ({
     [format, draft]
   );
   const deck = (slidevDeck ?? revealDeck)!;
+  const isHtml = revealDeck?.source === 'html';
   const current = Math.min(currentIndex, deck.slides.length - 1);
   const dark = slidevDeck
     ? resolveDeckDark(slidevDeck.headmatter, theme.mode === 'dark')
@@ -289,7 +289,7 @@ export const PresentationContainer = ({
     }
 
     if (!isTextFile(file)) {
-      toast.error('Only Markdown files (.md) can be imported.');
+      toast.error('Only Markdown (.md) or HTML (.html) files can be imported.');
       return;
     }
 
@@ -341,8 +341,12 @@ export const PresentationContainer = ({
 
   const exportFile = () => {
     downloadBlob(
-      new Blob([draft], { type: 'text/markdown;charset=utf-8' }),
-      toFileName(presentation.name)
+      new Blob([draft], {
+        type: isHtml
+          ? 'text/html;charset=utf-8'
+          : 'text/markdown;charset=utf-8',
+      }),
+      toFileName(presentation.name, isHtml ? '.html' : SLIDES_FILE_EXTENSION)
     );
   };
 
@@ -380,15 +384,15 @@ export const PresentationContainer = ({
             size="sm"
             variant="ghost"
             onClick={() => importInputRef.current?.click()}
-            title="Replace the deck with a Markdown file (or drop a file on the editor)"
+            title="Replace the deck with a Markdown or HTML file (or drop a file on the editor)"
           >
             <Upload className="size-4" />
-            Import .md
+            Import
           </Button>
         )}
         <Button size="sm" variant="ghost" onClick={exportFile}>
           <Download className="size-4" />
-          Export .md
+          Export {isHtml ? '.html' : '.md'}
         </Button>
         <div
           className="ml-auto flex items-center rounded-md border p-0.5 text-xs"
@@ -467,9 +471,10 @@ export const PresentationContainer = ({
               dark={theme.mode === 'dark'}
               placeholder={
                 format === 'reveal'
-                  ? 'Paste or write your Reveal.js Markdown here. Separate slides with --- (vertical: --)'
+                  ? 'Paste your Reveal.js deck: HTML (<section>...</section> or a whole page) or Markdown (slides separated by ---, vertical: --)'
                   : 'Paste or write your Slidev Markdown here. Separate slides with ---'
               }
+              language={isHtml ? 'html' : 'markdown'}
               onCursorLineChange={handleCursorLine}
               onPresent={(fromCurrent) =>
                 setPlayerStart(fromCurrent ? current : 0)

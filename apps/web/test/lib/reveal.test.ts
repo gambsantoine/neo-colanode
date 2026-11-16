@@ -141,3 +141,91 @@ describe('lib/reveal-themes', () => {
     );
   });
 });
+
+describe('lib/reveal HTML decks', () => {
+  const page = `<!doctype html>
+<html>
+  <head>
+    <title>HTML deck</title>
+    <link rel="stylesheet" href="dist/theme/white.css">
+    <style>.big { font-size: 3em; }</style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section data-background-color="#123456" onclick="alert(1)">
+          <h1 class="big">Title</h1>
+          <aside class="notes">Say hello</aside>
+        </section>
+        <section>
+          <section><h2>Down 1</h2></section>
+          <section style="color: red"><h2>Down 2</h2></section>
+        </section>
+        <section data-markdown>
+          <textarea data-template>
+            ## From Markdown
+            - item
+          </textarea>
+        </section>
+        <section>
+          <pre><code class="language-js" data-trim>
+            const a = 1;
+          </code></pre>
+          <script>alert(1)</script>
+        </section>
+      </div>
+    </div>
+    <script src="dist/reveal.js"></script>
+  </body>
+</html>`;
+
+  it('detects HTML sources', () => {
+    expect(parseRevealDeck(page).source).toBe('html');
+    expect(parseRevealDeck('<section><h1>A</h1></section>').source).toBe(
+      'html'
+    );
+    expect(
+      parseRevealDeck('# A\n---\n<section>in markdown</section>').source
+    ).toBe('markdown');
+  });
+
+  it('reads slides, stacks, notes and page options', () => {
+    const deck = parseRevealDeck(page);
+    expect(deck.title).toBe('HTML deck');
+    expect(deck.config.theme).toBe('white');
+    expect(deck.styles).toContain('.big');
+    expect(deck.slides.map((slide) => [slide.h, slide.v, slide.kind])).toEqual([
+      [0, 0, 'html'],
+      [1, 0, 'html'],
+      [1, 1, 'html'],
+      [2, 0, 'markdown'],
+      [3, 0, 'html'],
+    ]);
+    expect(deck.slides[0]!.notes).toBe('Say hello');
+    expect(deck.slides[0]!.content).not.toContain('aside');
+    expect(deck.slides[0]!.attributes).toEqual([
+      ['data-background-color', '#123456'],
+    ]);
+    expect(deck.slides[3]!.content).toBe('## From Markdown\n- item');
+  });
+
+  it('maps slides to the lines of their <section>', () => {
+    const source =
+      '<section>\n  <h1>A</h1>\n</section>\n<section>\n  <h1>B</h1>\n</section>';
+    const deck = parseRevealDeck(source);
+    expect(deck.slides.map((slide) => slide.startLine)).toEqual([0, 3]);
+    expect(findSlideAtLine(deck, 4)).toBe(1);
+  });
+
+  it('renders HTML slides safely, with styles and highlighted code', () => {
+    const html = buildRevealSlidesHtml(parseRevealDeck(page));
+    expect(html).toContain('<style>');
+    expect(html).toContain('class="big"');
+    expect(html).toContain('style="color: red"');
+    expect(html).toContain('data-background-color="#123456"');
+    expect(html).not.toContain('onclick');
+    expect(html).not.toContain('<script');
+    expect(html).toContain('slide-code-language">JavaScript');
+    expect(html).toContain('<h2>From Markdown</h2>');
+  });
+});

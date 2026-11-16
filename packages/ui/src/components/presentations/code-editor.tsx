@@ -226,6 +226,13 @@ export const CodeEditor = ({
     }
   }, [dark, status]);
 
+  useEffect(() => {
+    const model = editorRef.current?.getModel();
+    if (model && model.getLanguageId() !== language) {
+      monacoRef.current?.editor.setModelLanguage(model, language);
+    }
+  }, [language, status]);
+
   return (
     <div className={cn('relative min-h-0', className)}>
       <div ref={containerRef} className="absolute inset-0" />
