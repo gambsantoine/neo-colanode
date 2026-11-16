@@ -107,6 +107,10 @@ export const RevealView = ({
       // The preview shows every fragment, the presentation reveals them.
       fragments: interactive,
       plugins: [],
+      // Reveal switches to its scroll view below 435px: previews and the
+      // presenter window are smaller than that, and must stay slides.
+      scrollActivationWidth: 0,
+      view: null,
     });
 
     let destroyed = false;
