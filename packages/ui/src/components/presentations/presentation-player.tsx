@@ -173,8 +173,17 @@ export const PresentationPlayer = ({
       <div
         className="relative min-h-0 flex-1"
         onClick={(event) => {
-          const { left, width } = event.currentTarget.getBoundingClientRect();
-          go(event.clientX - left < width / 3 ? -1 : 1);
+          // Clicks on the slide come from its iframe, in its coordinates.
+          const view = event.nativeEvent.view;
+          let fraction: number;
+          if (view && view !== window) {
+            fraction = event.clientX / view.innerWidth;
+          } else {
+            const { left, width } = event.currentTarget.getBoundingClientRect();
+            fraction = (event.clientX - left) / width;
+          }
+
+          go(fraction < 1 / 3 ? -1 : 1);
         }}
       >
         <SlideView slide={slide} dark={dark} />

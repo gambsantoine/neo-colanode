@@ -17,6 +17,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useInView } from 'react-intersection-observer';
 import { toast } from 'sonner';
 
 import { LocalPresentationNode } from '@colanode/client/types';
@@ -43,6 +44,7 @@ import {
 import {
   DEFAULT_PRESENTATION_CONTENT,
   SLIDES_FILE_EXTENSION,
+  Slide,
   findSlideAtLine,
   getLineAt,
   parseDeck,
@@ -584,11 +586,7 @@ export const PresentationContainer = ({
                         : 'border-transparent hover:border-border'
                     )}
                   >
-                    <SlideView
-                      slide={item}
-                      dark={dark}
-                      className="pointer-events-none"
-                    />
+                    <SlideThumbnail slide={item} dark={dark} />
                     <span className="absolute bottom-0.5 left-1 rounded bg-black/60 px-1 text-[10px] text-white">
                       {item.index + 1}
                     </span>
@@ -639,6 +637,16 @@ export const PresentationContainer = ({
           }}
         />
       )}
+    </div>
+  );
+};
+
+// Thumbnails are frames: only the visible ones are rendered.
+const SlideThumbnail = ({ slide, dark }: { slide: Slide; dark: boolean }) => {
+  const { ref, inView } = useInView({ rootMargin: '200px' });
+  return (
+    <div ref={ref} className="pointer-events-none h-full w-full">
+      {inView && <SlideView slide={slide} dark={dark} />}
     </div>
   );
 };

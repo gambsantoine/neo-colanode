@@ -1,10 +1,8 @@
-import 'reveal.js/reveal.css';
-import '@colanode/ui/styles/highlight.css';
-import '@colanode/ui/styles/slide-code.css';
-
 import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import Reveal from 'reveal.js';
+import revealCss from 'reveal.js/reveal.css?inline';
 
+import { SlideFrame } from '@colanode/ui/components/presentations/slide-frame';
 import { PresentationController } from '@colanode/ui/lib/presentation-controller';
 import {
   buildRevealSlidesHtml,
@@ -18,6 +16,7 @@ import {
 import { enhanceCodeBlocks } from '@colanode/ui/lib/slides-code';
 import { renderMermaidPlaceholders } from '@colanode/ui/lib/slides-mermaid';
 import { cn } from '@colanode/ui/lib/utils';
+import slideCodeCss from '@colanode/ui/styles/slide-code.css?inline';
 
 type RevealApi = InstanceType<typeof Reveal>;
 
@@ -46,7 +45,13 @@ export const RevealView = ({
   const slidesRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<RevealApi | null>(null);
   const [ready, setReady] = useState(false);
-  const [themeLoaded, setThemeLoaded] = useState<string | null>(null);
+  // The deck lives in an iframe: only Reveal.js, its theme and Tailwind
+  // style it. The engine starts once the frame is ready.
+  const [frameDocument, setFrameDocument] = useState<Document | null>(null);
+  const [themeCss, setThemeCss] = useState<{
+    theme: string;
+    css: string;
+  } | null>(null);
 
   const html = useMemo(() => buildRevealSlidesHtml(deck), [deck]);
   const theme = deck.config.theme;
@@ -59,10 +64,10 @@ export const RevealView = ({
   useEffect(() => {
     let cancelled = false;
     loadRevealTheme(theme)
-      .catch(() => undefined)
-      .then(() => {
+      .catch(() => '')
+      .then((css) => {
         if (!cancelled) {
-          setThemeLoaded(theme);
+          setThemeCss({ theme, css });
         }
       });
 
@@ -133,7 +138,7 @@ export const RevealView = ({
         // Not initialized yet.
       }
     };
-  }, [interactive]);
+  }, [interactive, frameDocument]);
 
   // New content: the slides are replaced and the position kept.
   useEffect(() => {
@@ -225,22 +230,41 @@ export const RevealView = ({
     const observer = new ResizeObserver(() => apiRef.current?.layout());
     observer.observe(viewport);
     return () => observer.disconnect();
-  }, []);
+  }, [frameDocument]);
+
+  const styles = useMemo(
+    () => [revealCss, themeCss?.css ?? '', slideCodeCss],
+    [themeCss]
+  );
 
   return (
-    <div
-      ref={viewportRef}
-      className={cn(
-        'reveal-viewport relative h-full w-full overflow-hidden',
-        getRevealThemeClass(theme),
-        deck.dark ? 'slide-code-dark' : 'slide-code-light',
-        themeLoaded !== theme && 'invisible',
-        className
-      )}
-    >
-      <div ref={revealRef} className="reveal">
-        <div ref={slidesRef} className="slides" />
-      </div>
+    <div className={cn('relative h-full w-full overflow-hidden', className)}>
+      <SlideFrame
+        styles={styles}
+        title="Presentation"
+        onReady={setFrameDocument}
+        style={{ width: '100%', height: '100%' }}
+      >
+        <div
+          ref={viewportRef}
+          className={cn(
+            'reveal-viewport',
+            getRevealThemeClass(theme),
+            deck.dark ? 'slide-code-dark' : 'slide-code-light'
+          )}
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden',
+            visibility: themeCss?.theme === theme ? 'visible' : 'hidden',
+          }}
+        >
+          <div ref={revealRef} className="reveal">
+            <div ref={slidesRef} className="slides" />
+          </div>
+        </div>
+      </SlideFrame>
     </div>
   );
 };

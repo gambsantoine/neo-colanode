@@ -51,6 +51,9 @@
   "overrides": {
     "@expo/cli": {
       "zod": "^4.6.7"
+    },
+    "monaco-editor": {
+      "dompurify": "3.4.17"
     }
   }
 }

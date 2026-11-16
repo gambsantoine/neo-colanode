@@ -1,9 +1,6 @@
-import '@colanode/ui/styles/highlight.css';
-import '@colanode/ui/styles/slides.css';
-import '@colanode/ui/styles/slide-code.css';
-
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { SlideFrame } from '@colanode/ui/components/presentations/slide-frame';
 import {
   Slide,
   toCssBackground,
@@ -13,6 +10,11 @@ import { enhanceCodeBlocks } from '@colanode/ui/lib/slides-code';
 import { renderMermaidPlaceholders } from '@colanode/ui/lib/slides-mermaid';
 import { renderSlideMarkdown } from '@colanode/ui/lib/slides-render';
 import { cn } from '@colanode/ui/lib/utils';
+import slideCodeCss from '@colanode/ui/styles/slide-code.css?inline';
+import slidesCss from '@colanode/ui/styles/slides.css?inline';
+
+// Only the styles of the Slidev engine (and Tailwind) apply to the slides.
+const SLIDEV_STYLES = [slidesCss, slideCodeCss];
 
 // Slides are drawn on a fixed canvas (Slidev's default size) and scaled to
 // fit, so a deck looks the same in the editor preview and in full screen.
@@ -215,14 +217,17 @@ export const SlideView = ({ slide, dark, className }: SlideViewProps) => {
             height: SLIDE_HEIGHT * scale,
           }}
         >
-          <div
+          <SlideFrame
+            styles={SLIDEV_STYLES}
             style={{
+              width: SLIDE_WIDTH,
+              height: SLIDE_HEIGHT,
               transform: `scale(${scale})`,
               transformOrigin: 'top left',
             }}
           >
             <SlideCanvas slide={slide} dark={dark} />
-          </div>
+          </SlideFrame>
         </div>
       )}
     </div>

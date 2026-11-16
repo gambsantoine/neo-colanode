@@ -14,20 +14,26 @@ const setButtonState = (button: HTMLButtonElement, copied: boolean) => {
   button.dataset.copied = copied ? 'true' : 'false';
 };
 
-export const copyText = async (text: string): Promise<boolean> => {
+// Through the window of the document clicked (slides live in iframes): the
+// clipboard API needs the focused document.
+export const copyText = async (
+  text: string,
+  target: Document = document
+): Promise<boolean> => {
+  const view = target.defaultView ?? window;
   try {
-    await navigator.clipboard.writeText(text);
+    await view.navigator.clipboard.writeText(text);
     return true;
   } catch {
     // No clipboard API (insecure context...): legacy copy.
-    const textarea = document.createElement('textarea');
+    const textarea = target.createElement('textarea');
     textarea.value = text;
     textarea.setAttribute('readonly', '');
     textarea.style.position = 'fixed';
     textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
+    target.body.appendChild(textarea);
     textarea.select();
-    const copied = document.execCommand('copy');
+    const copied = target.execCommand('copy');
     textarea.remove();
     return copied;
   }
@@ -43,7 +49,7 @@ export const enhanceCodeBlocks = (root: HTMLElement): (() => void) => {
         return;
       }
 
-      const button = document.createElement('button');
+      const button = root.ownerDocument.createElement('button');
       button.type = 'button';
       button.className = COPY_BUTTON_CLASS;
       button.title = 'Copy the code';
@@ -75,7 +81,7 @@ export const enhanceCodeBlocks = (root: HTMLElement): (() => void) => {
       button.closest(`.${CODE_BLOCK_CLASS}`)?.querySelector('pre code')
         ?.textContent ?? '';
 
-    void copyText(code).then((copied) => {
+    void copyText(code, root.ownerDocument).then((copied) => {
       if (!copied) {
         return;
       }

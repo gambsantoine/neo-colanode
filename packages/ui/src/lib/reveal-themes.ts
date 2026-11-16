@@ -15,7 +15,7 @@ const loaders: Record<RevealTheme, () => Promise<{ default: string }>> = {
 export const getRevealThemeClass = (theme: RevealTheme) =>
   `reveal-theme-${theme}`;
 
-const loading = new Map<RevealTheme, Promise<void>>();
+const loading = new Map<RevealTheme, Promise<string>>();
 
 // `:root` and every `.reveal` / `.reveal-viewport` rule are prefixed with the
 // theme class, which is set on the deck viewport (see RevealView).
@@ -34,21 +34,15 @@ export const scopeThemeCss = (css: string, scope: string): string =>
     )
     .replace(/(^|[{},])(\s*)section\.has-/g, `$1$2.${scope} section.has-`);
 
-// Themes set their variables on `:root`: they are scoped to a class instead,
-// so several themes can be displayed at once without touching the app.
-export const loadRevealTheme = (theme: RevealTheme): Promise<void> => {
+// The theme stylesheet, scoped to its class (see scopeThemeCss), for the
+// frame displaying the deck. Loaded once per theme.
+export const loadRevealTheme = (theme: RevealTheme): Promise<string> => {
   let promise = loading.get(theme);
   if (!promise) {
     promise = loaders[theme]()
-      .then((module) => {
-        const style = document.createElement('style');
-        style.dataset.revealTheme = theme;
-        style.textContent = scopeThemeCss(
-          module.default,
-          getRevealThemeClass(theme)
-        );
-        document.head.appendChild(style);
-      })
+      .then((module) =>
+        scopeThemeCss(module.default, getRevealThemeClass(theme))
+      )
       .catch((error) => {
         loading.delete(theme);
         throw error;
