@@ -11,7 +11,6 @@ import {
 import {
   ChangeEvent,
   DragEvent,
-  KeyboardEvent,
   useEffect,
   useMemo,
   useRef,
@@ -22,6 +21,10 @@ import { toast } from 'sonner';
 
 import { LocalPresentationNode } from '@colanode/client/types';
 import { NodeRole, PresentationFormat, hasNodeRole } from '@colanode/core';
+import {
+  CodeEditor,
+  CodeEditorHandle,
+} from '@colanode/ui/components/presentations/code-editor';
 import { PresentationPlayer } from '@colanode/ui/components/presentations/presentation-player';
 import { PresenterWindow } from '@colanode/ui/components/presentations/presenter-window';
 import { RevealPlayer } from '@colanode/ui/components/presentations/reveal-player';
@@ -33,7 +36,6 @@ import {
 import { Button } from '@colanode/ui/components/ui/button';
 import { useTheme } from '@colanode/ui/contexts/theme';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
-import { applyTextEdit, indentLines } from '@colanode/ui/lib/diagram-editing';
 import { downloadBlob } from '@colanode/ui/lib/download';
 import { PresentationController } from '@colanode/ui/lib/presentation-controller';
 import { openPresenterWindow } from '@colanode/ui/lib/presenter-window';
@@ -46,7 +48,6 @@ import {
   SLIDES_FILE_EXTENSION,
   Slide,
   findSlideAtLine,
-  getLineAt,
   parseDeck,
 } from '@colanode/ui/lib/slides';
 import { cn } from '@colanode/ui/lib/utils';
@@ -90,7 +91,8 @@ export const PresentationContainer = ({
   const [playerIndex, setPlayerIndex] = useState(0);
   const controllerRef = useRef<PresentationController | null>(null);
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<CodeEditorHandle | null>(null);
+  const cursorLineRef = useRef(0);
   const importInputRef = useRef<HTMLInputElement>(null);
   const thumbnailsRef = useRef<HTMLDivElement>(null);
 
@@ -145,18 +147,9 @@ export const PresentationContainer = ({
       return;
     }
 
+    // The editor applies the change in place, keeping the cursor.
     lastSavedRef.current = remote;
-    const textarea = textareaRef.current;
-    const selection = textarea
-      ? [textarea.selectionStart, textarea.selectionEnd]
-      : null;
-
     setDraft(remote);
-    if (textarea && selection && document.activeElement === textarea) {
-      requestAnimationFrame(() =>
-        textarea.setSelectionRange(selection[0]!, selection[1]!)
-      );
-    }
   }, [presentation.content]);
 
   const updateDraft = (value: string) => {
@@ -240,22 +233,17 @@ export const PresentationContainer = ({
   };
 
   // The preview follows the slide under the caret.
-  const syncSlideWithCaret = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) {
-      return;
-    }
-
-    const line = getLineAt(textarea.value, textarea.selectionStart);
-    setCurrentIndex(findSlideAtLine(deck, line));
+  const deckRef = useRef(deck);
+  deckRef.current = deck;
+  const handleCursorLine = (line: number) => {
+    cursorLineRef.current = line;
+    setCurrentIndex(findSlideAtLine(deckRef.current, line));
   };
 
   // Typing may add or remove slides before the caret.
   useEffect(() => {
-    const textarea = textareaRef.current;
-    if (textarea && document.activeElement === textarea) {
-      const line = getLineAt(textarea.value, textarea.selectionStart);
-      setCurrentIndex(findSlideAtLine(deck, line));
+    if (editorRef.current?.hasFocus()) {
+      setCurrentIndex(findSlideAtLine(deck, cursorLineRef.current));
     }
   }, [deck]);
 
@@ -269,52 +257,29 @@ export const PresentationContainer = ({
   const selectSlide = (index: number) => {
     setCurrentIndex(index);
 
-    const textarea = textareaRef.current;
     const slide = deck.slides[index];
-    if (!textarea || !slide || layout === 'preview') {
+    if (!slide || layout === 'preview') {
       return;
     }
 
-    // Puts the caret at the start of the slide in the source.
-    const lines = textarea.value.split('\n');
-    let offset = 0;
-    for (let i = 0; i < slide.startLine && i < lines.length; i++) {
-      offset += lines[i]!.length + 1;
-    }
-
-    textarea.focus();
-    textarea.setSelectionRange(offset, offset);
-    const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 20;
-    textarea.scrollTop = Math.max(0, slide.startLine * lineHeight - 40);
+    // Puts the cursor at the start of the slide in the source.
+    editorRef.current?.setCursorLine(slide.startLine);
   };
 
   const replaceContent = (content: string, source: string) => {
-    const textarea = textareaRef.current;
     const normalized = content.replace(/\r\n?/g, '\n');
+    const editor = layout !== 'preview' ? editorRef.current : null;
 
-    if (textarea && layout !== 'preview') {
-      // Through the editing commands, so Ctrl+Z restores the previous deck.
-      applyTextEdit(
-        textarea,
-        {
-          from: 0,
-          to: textarea.value.length,
-          text: normalized,
-          selectionStart: 0,
-          selectionEnd: 0,
-        },
-        updateDraft
-      );
+    if (editor) {
+      // One edit in the editor history: Ctrl+Z restores the previous deck.
+      editor.replaceAll(normalized);
     } else {
       updateDraft(normalized);
     }
 
     setCurrentIndex(0);
     toast.success(`Imported ${source}`, {
-      description:
-        textarea && layout !== 'preview'
-          ? 'Press Ctrl+Z in the editor to undo.'
-          : undefined,
+      description: editor ? 'Press Ctrl+Z in the editor to undo.' : undefined,
     });
   };
 
@@ -379,34 +344,6 @@ export const PresentationContainer = ({
       new Blob([draft], { type: 'text/markdown;charset=utf-8' }),
       toFileName(presentation.name)
     );
-  };
-
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (
-      event.key === 'Tab' &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
-      event.preventDefault();
-      const textarea = event.currentTarget;
-      applyTextEdit(
-        textarea,
-        indentLines(
-          textarea.value,
-          textarea.selectionStart,
-          textarea.selectionEnd,
-          event.shiftKey ? 'out' : 'in'
-        ),
-        updateDraft
-      );
-      return;
-    }
-
-    if (event.key === 'F5') {
-      event.preventDefault();
-      setPlayerStart(event.shiftKey ? current : 0);
-    }
   };
 
   const showEditor = layout !== 'preview';
@@ -518,26 +455,27 @@ export const PresentationContainer = ({
               'relative flex min-h-0 min-w-0 flex-col',
               showPreview ? 'w-1/2 border-r' : 'flex-1'
             )}
-            onDragOver={handleDragOver}
+            // Capture: the editor would handle the drop itself.
+            onDragOverCapture={handleDragOver}
             onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
+            onDropCapture={handleDrop}
           >
-            <textarea
-              ref={textareaRef}
+            <CodeEditor
               value={draft}
+              onChange={updateDraft}
               readOnly={!canEdit}
-              spellCheck={false}
+              dark={theme.mode === 'dark'}
               placeholder={
                 format === 'reveal'
                   ? 'Paste or write your Reveal.js Markdown here. Separate slides with --- (vertical: --)'
                   : 'Paste or write your Slidev Markdown here. Separate slides with ---'
               }
-              onChange={(event) => updateDraft(event.target.value)}
-              onKeyDown={handleKeyDown}
-              onKeyUp={syncSlideWithCaret}
-              onClick={syncSlideWithCaret}
-              onSelect={syncSlideWithCaret}
-              className="min-h-0 w-full flex-1 resize-none bg-transparent p-4 font-mono text-sm leading-relaxed outline-none dark:bg-input/30"
+              onCursorLineChange={handleCursorLine}
+              onPresent={(fromCurrent) =>
+                setPlayerStart(fromCurrent ? current : 0)
+              }
+              handleRef={editorRef}
+              className="flex-1"
             />
             {isDragging && (
               <div className="pointer-events-none absolute inset-2 flex items-center justify-center rounded-lg border-2 border-dashed border-primary bg-background/80 text-sm font-medium">
