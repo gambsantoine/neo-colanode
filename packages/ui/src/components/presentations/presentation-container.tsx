@@ -2,6 +2,7 @@ import {
   Columns2,
   Download,
   Eye,
+  MonitorPlay,
   PenLine,
   Play,
   StepForward,
@@ -21,6 +22,7 @@ import { toast } from 'sonner';
 import { LocalPresentationNode } from '@colanode/client/types';
 import { NodeRole, PresentationFormat, hasNodeRole } from '@colanode/core';
 import { PresentationPlayer } from '@colanode/ui/components/presentations/presentation-player';
+import { PresenterWindow } from '@colanode/ui/components/presentations/presenter-window';
 import { RevealPlayer } from '@colanode/ui/components/presentations/reveal-player';
 import { RevealView } from '@colanode/ui/components/presentations/reveal-view';
 import {
@@ -32,6 +34,8 @@ import { useTheme } from '@colanode/ui/contexts/theme';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { applyTextEdit, indentLines } from '@colanode/ui/lib/diagram-editing';
 import { downloadBlob } from '@colanode/ui/lib/download';
+import { PresentationController } from '@colanode/ui/lib/presentation-controller';
+import { openPresenterWindow } from '@colanode/ui/lib/presenter-window';
 import {
   DEFAULT_REVEAL_CONTENT,
   parseRevealDeck,
@@ -80,6 +84,9 @@ export const PresentationContainer = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playerStart, setPlayerStart] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [presenterWindow, setPresenterWindow] = useState<Window | null>(null);
+  const [playerIndex, setPlayerIndex] = useState(0);
+  const controllerRef = useRef<PresentationController | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -203,6 +210,31 @@ export const PresentationContainer = ({
     }
 
     setCurrentIndex(0);
+  };
+
+  // Audience window (this one, to move to the projector) + presenter window.
+  const startPresenter = () => {
+    const popup = openPresenterWindow();
+    if (!popup) {
+      toast.error('The presenter window was blocked', {
+        description: 'Allow pop-ups for this site, then try again.',
+      });
+      return;
+    }
+
+    setPlayerIndex(current);
+    setPresenterWindow(popup);
+    setPlayerStart(current);
+    toast.info('Presenter view opened', {
+      description:
+        'Move this window to the projector, then press F for full screen.',
+    });
+  };
+
+  const closePlayer = (index: number) => {
+    setPlayerStart(null);
+    setPresenterWindow(null);
+    setCurrentIndex(index);
   };
 
   // The preview follows the slide under the caret.
@@ -394,6 +426,15 @@ export const PresentationContainer = ({
           <StepForward className="size-4" />
           From slide {current + 1}
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={startPresenter}
+          title="Open the presenter view (notes, next slide, timer) in a second window"
+        >
+          <MonitorPlay className="size-4" />
+          Presenter view
+        </Button>
         <div className="mx-1 h-5 w-px bg-border" />
         {canEdit && (
           <Button
@@ -563,10 +604,9 @@ export const PresentationContainer = ({
         <RevealPlayer
           deck={revealDeck}
           startIndex={playerStart}
-          onClose={(index) => {
-            setPlayerStart(null);
-            setCurrentIndex(index);
-          }}
+          onClose={closePlayer}
+          onIndexChange={setPlayerIndex}
+          controllerRef={presenterWindow ? controllerRef : undefined}
         />
       )}
       {playerStart !== null && slidevDeck && (
@@ -574,9 +614,28 @@ export const PresentationContainer = ({
           deck={slidevDeck}
           dark={dark}
           startIndex={playerStart}
-          onClose={(index) => {
-            setPlayerStart(null);
-            setCurrentIndex(index);
+          onClose={closePlayer}
+          onIndexChange={setPlayerIndex}
+          controllerRef={presenterWindow ? controllerRef : undefined}
+        />
+      )}
+      {presenterWindow && playerStart !== null && (
+        <PresenterWindow
+          popup={presenterWindow}
+          title={presentation.name}
+          presenterDeck={
+            revealDeck
+              ? { format: 'reveal', deck: revealDeck }
+              : { format: 'slidev', deck: slidevDeck!, dark }
+          }
+          index={playerIndex}
+          getController={() => controllerRef.current}
+          onClose={(ended) => {
+            setPresenterWindow(null);
+            if (ended) {
+              setPlayerStart(null);
+              setCurrentIndex(playerIndex);
+            }
           }}
         />
       )}

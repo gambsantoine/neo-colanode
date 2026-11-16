@@ -1,11 +1,13 @@
 import { RefObject, useEffect, useRef } from 'react';
 
-// Puts the element in browser full screen while mounted. Leaving full screen
-// (Escape, F11...) calls `onExit`. When full screen is not allowed (e.g. in an
-// iframe), the element is left as is: callers make it fill the window.
+// With `auto`, puts the element in browser full screen while mounted, and
+// leaving full screen (Escape, F11...) calls `onExit`. When full screen is not
+// allowed (e.g. in an iframe), the element is left as is: callers make it fill
+// the window.
 export const useFullscreenElement = (
   ref: RefObject<HTMLElement | null>,
-  onExit: () => void
+  onExit: () => void,
+  auto = true
 ) => {
   const onExitRef = useRef(onExit);
   onExitRef.current = onExit;
@@ -14,15 +16,17 @@ export const useFullscreenElement = (
     const element = ref.current;
     let entered = false;
 
-    element
-      ?.requestFullscreen?.()
-      .then(() => {
-        entered = true;
-      })
-      .catch(() => undefined);
+    if (auto) {
+      element
+        ?.requestFullscreen?.()
+        .then(() => {
+          entered = true;
+        })
+        .catch(() => undefined);
+    }
 
     const onFullscreenChange = () => {
-      if (entered && !document.fullscreenElement) {
+      if (auto && entered && !document.fullscreenElement) {
         onExitRef.current();
       }
     };
@@ -34,11 +38,19 @@ export const useFullscreenElement = (
         document.exitFullscreen().catch(() => undefined);
       }
     };
-  }, [ref]);
+  }, [ref, auto]);
 };
 
 export const exitFullscreen = () => {
   if (document.fullscreenElement) {
     document.exitFullscreen().catch(() => undefined);
+  }
+};
+
+export const toggleFullscreen = (element: HTMLElement | null) => {
+  if (document.fullscreenElement) {
+    exitFullscreen();
+  } else {
+    element?.requestFullscreen?.().catch(() => undefined);
   }
 };

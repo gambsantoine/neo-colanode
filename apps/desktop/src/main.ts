@@ -67,6 +67,9 @@ updateElectronApp({
   notifyUser: true,
 });
 
+// Must match PRESENTER_WINDOW_NAME in packages/ui/src/lib/presenter-window.ts.
+const PRESENTER_WINDOW_NAME = 'colanode-presenter';
+
 const openExternalUrl = (url: string) => {
   if (isSafeExternalUrl(url)) {
     shell.openExternal(url);
@@ -167,8 +170,39 @@ const createWindow = async () => {
   }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
+    // The presenter view of presentations: an empty window the app renders
+    // into itself (see packages/ui/src/lib/presenter-window.ts).
+    if (
+      details.url === 'about:blank' &&
+      details.frameName === PRESENTER_WINDOW_NAME
+    ) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 1200,
+          height: 760,
+          autoHideMenuBar: true,
+          title: 'Presenter view',
+          icon: path.join(pathService.assets, 'colanode-logo.png'),
+        },
+      };
+    }
+
     openExternalUrl(details.url);
     return { action: 'deny' }; // Prevent default new-window behavior
+  });
+
+  // The presenter window never loads anything nor opens other windows.
+  mainWindow.webContents.on('did-create-window', (childWindow) => {
+    childWindow.setMenuBarVisibility(false);
+    childWindow.webContents.on('will-navigate', (event, url) => {
+      event.preventDefault();
+      openExternalUrl(url);
+    });
+    childWindow.webContents.setWindowOpenHandler((details) => {
+      openExternalUrl(details.url);
+      return { action: 'deny' };
+    });
   });
 
   mainWindow.webContents.on('will-navigate', (event, url) => {

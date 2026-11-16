@@ -43,15 +43,22 @@ export const NodeBreadcrumb = ({ nodes }: NodeBreadcrumbProps) => {
           return (
             <Fragment key={item.id}>
               {!isFirst && <BreadcrumbSeparator />}
-              <BreadcrumbItem className="cursor-pointer hover:text-foreground">
-                <Link
-                  from="/workspace/$userId"
-                  to="$nodeId"
-                  params={{ nodeId: item.id }}
-                >
-                  <NodeBreadcrumbItem node={item} />
-                </Link>
-              </BreadcrumbItem>
+              {item.type === 'category' ? (
+                // Categories only group items in the sidebar: no page.
+                <BreadcrumbItem className="text-muted-foreground text-sm">
+                  {item.name}
+                </BreadcrumbItem>
+              ) : (
+                <BreadcrumbItem className="cursor-pointer hover:text-foreground">
+                  <Link
+                    from="/workspace/$userId"
+                    to="$nodeId"
+                    params={{ nodeId: item.id }}
+                  >
+                    <NodeBreadcrumbItem node={item} />
+                  </Link>
+                </BreadcrumbItem>
+              )}
               {showEllipsis && isFirst && (
                 <Fragment>
                   <BreadcrumbSeparator />
@@ -62,6 +69,14 @@ export const NodeBreadcrumb = ({ nodes }: NodeBreadcrumbProps) => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start">
                         {ellipsisItems.map((ellipsisItem) => {
+                          if (ellipsisItem.type === 'category') {
+                            return (
+                              <DropdownMenuItem key={ellipsisItem.id} disabled>
+                                {ellipsisItem.name}
+                              </DropdownMenuItem>
+                            );
+                          }
+
                           return (
                             <DropdownMenuItem key={ellipsisItem.id}>
                               <Link

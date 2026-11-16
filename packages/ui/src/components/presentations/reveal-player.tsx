@@ -1,12 +1,14 @@
-import { NotebookText, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { Maximize, NotebookText, X } from 'lucide-react';
+import { MutableRefObject, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { RevealView } from '@colanode/ui/components/presentations/reveal-view';
 import {
   exitFullscreen,
+  toggleFullscreen,
   useFullscreenElement,
 } from '@colanode/ui/hooks/use-fullscreen-element';
+import { PresentationController } from '@colanode/ui/lib/presentation-controller';
 import { RevealDeck } from '@colanode/ui/lib/reveal';
 import { cn } from '@colanode/ui/lib/utils';
 
@@ -14,6 +16,9 @@ interface RevealPlayerProps {
   deck: RevealDeck;
   startIndex: number;
   onClose: (index: number) => void;
+  onIndexChange?: (index: number) => void;
+  // Driven from the presenter window: starts windowed.
+  controllerRef?: MutableRefObject<PresentationController | null>;
 }
 
 // Full screen Reveal.js presentation. Navigation is Reveal's own: arrows,
@@ -22,6 +27,8 @@ export const RevealPlayer = ({
   deck,
   startIndex,
   onClose,
+  onIndexChange,
+  controllerRef,
 }: RevealPlayerProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(() =>
@@ -32,7 +39,36 @@ export const RevealPlayer = ({
   const indexRef = useRef(index);
   indexRef.current = index;
 
-  useFullscreenElement(rootRef, () => onClose(indexRef.current));
+  useFullscreenElement(
+    rootRef,
+    () => onClose(indexRef.current),
+    controllerRef === undefined
+  );
+
+  const onIndexChangeRef = useRef(onIndexChange);
+  onIndexChangeRef.current = onIndexChange;
+  useEffect(() => {
+    onIndexChangeRef.current?.(index);
+  }, [index]);
+
+  // Reveal.js uses F for full screen on its own page only.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() === 'f' &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        toggleFullscreen(rootRef.current);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, []);
 
   const close = () => {
     exitFullscreen();
@@ -52,6 +88,7 @@ export const RevealPlayer = ({
           index={index}
           onIndexChange={setIndex}
           interactive
+          controllerRef={controllerRef}
         />
       </div>
 
@@ -74,6 +111,14 @@ export const RevealPlayer = ({
           title="Speaker notes"
         >
           <NotebookText className="size-4" />
+        </button>
+        <button
+          type="button"
+          className="rounded-full p-1.5 hover:bg-white/15"
+          onClick={() => toggleFullscreen(rootRef.current)}
+          title="Full screen (F)"
+        >
+          <Maximize className="size-4" />
         </button>
         <button
           type="button"

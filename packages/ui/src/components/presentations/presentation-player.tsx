@@ -1,12 +1,26 @@
-import { ChevronLeft, ChevronRight, NotebookText, X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Maximize,
+  NotebookText,
+  X,
+} from 'lucide-react';
+import {
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { SlideView } from '@colanode/ui/components/presentations/slide-view';
 import {
   exitFullscreen,
+  toggleFullscreen,
   useFullscreenElement,
 } from '@colanode/ui/hooks/use-fullscreen-element';
+import { PresentationController } from '@colanode/ui/lib/presentation-controller';
 import { Deck } from '@colanode/ui/lib/slides';
 import { cn } from '@colanode/ui/lib/utils';
 
@@ -15,6 +29,10 @@ interface PresentationPlayerProps {
   dark: boolean;
   startIndex: number;
   onClose: (index: number) => void;
+  onIndexChange?: (index: number) => void;
+  // Driven from the presenter window: starts windowed (the audience window
+  // is put in full screen once on the projector).
+  controllerRef?: MutableRefObject<PresentationController | null>;
 }
 
 const CONTROLS_HIDE_DELAY_MS = 2500;
@@ -34,7 +52,10 @@ export const PresentationPlayer = ({
   dark,
   startIndex,
   onClose,
+  onIndexChange,
+  controllerRef,
 }: PresentationPlayerProps) => {
+  const withPresenter = controllerRef !== undefined;
   const rootRef = useRef<HTMLDivElement>(null);
   const count = deck.slides.length;
   const [index, setIndex] = useState(() =>
@@ -63,8 +84,35 @@ export const PresentationPlayer = ({
     onCloseRef.current(indexRef.current);
   }, []);
 
-  // Leaving full screen (Escape, F11...) ends the presentation.
-  useFullscreenElement(rootRef, () => onCloseRef.current(indexRef.current));
+  // Leaving full screen (Escape, F11...) ends the presentation, unless the
+  // presenter window drives it.
+  useFullscreenElement(
+    rootRef,
+    () => onCloseRef.current(indexRef.current),
+    !withPresenter
+  );
+
+  const onIndexChangeRef = useRef(onIndexChange);
+  onIndexChangeRef.current = onIndexChange;
+  useEffect(() => {
+    onIndexChangeRef.current?.(current);
+  }, [current]);
+
+  useEffect(() => {
+    if (!controllerRef) {
+      return;
+    }
+
+    controllerRef.current = {
+      next: () => go(1),
+      previous: () => go(-1),
+      goTo: (target) => setIndex(Math.min(Math.max(target, 0), count - 1)),
+    };
+
+    return () => {
+      controllerRef.current = null;
+    };
+  }, [controllerRef, go, count]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -87,6 +135,9 @@ export const PresentationPlayer = ({
       } else if (event.key === 'Escape') {
         event.preventDefault();
         close();
+      } else if (event.key.toLowerCase() === 'f') {
+        event.preventDefault();
+        toggleFullscreen(rootRef.current);
       } else if (event.key.toLowerCase() === 'n') {
         event.preventDefault();
         setShowNotes((value) => !value);
@@ -175,6 +226,14 @@ export const PresentationPlayer = ({
           title="Presenter notes (N)"
         >
           <NotebookText className="size-4" />
+        </button>
+        <button
+          type="button"
+          className="rounded-full p-1.5 hover:bg-white/15"
+          onClick={() => toggleFullscreen(rootRef.current)}
+          title="Full screen (F)"
+        >
+          <Maximize className="size-4" />
         </button>
         <button
           type="button"

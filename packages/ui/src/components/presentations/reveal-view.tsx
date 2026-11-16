@@ -2,9 +2,10 @@ import 'reveal.js/reveal.css';
 import '@colanode/ui/styles/highlight.css';
 import '@colanode/ui/styles/slide-code.css';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { MutableRefObject, useEffect, useMemo, useRef, useState } from 'react';
 import Reveal from 'reveal.js';
 
+import { PresentationController } from '@colanode/ui/lib/presentation-controller';
 import {
   buildRevealSlidesHtml,
   findRevealIndex,
@@ -26,6 +27,8 @@ interface RevealViewProps {
   onIndexChange?: (index: number) => void;
   // Full screen presentation: keyboard shortcuts, overview, slide numbers.
   interactive?: boolean;
+  // Next / previous go through the fragments, as the keyboard does.
+  controllerRef?: MutableRefObject<PresentationController | null>;
   className?: string;
 }
 
@@ -35,6 +38,7 @@ export const RevealView = ({
   index,
   onIndexChange,
   interactive = false,
+  controllerRef,
   className,
 }: RevealViewProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
@@ -160,6 +164,28 @@ export const RevealView = ({
       slideNumber: interactive && config.slideNumber ? 'c/t' : false,
     });
   }, [deck, interactive, ready]);
+
+  useEffect(() => {
+    const api = apiRef.current;
+    if (!controllerRef || !api || !ready) {
+      return;
+    }
+
+    controllerRef.current = {
+      next: () => api.next(),
+      previous: () => api.prev(),
+      goTo: (target) => {
+        const slide = deckRef.current.slides[target];
+        if (slide) {
+          api.slide(slide.h, slide.v);
+        }
+      },
+    };
+
+    return () => {
+      controllerRef.current = null;
+    };
+  }, [controllerRef, ready]);
 
   // Follows the slide selected outside (editor caret...).
   useEffect(() => {
