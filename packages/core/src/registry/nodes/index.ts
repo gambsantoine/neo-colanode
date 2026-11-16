@@ -7,6 +7,7 @@ import { FileAttributes, fileModel } from './file';
 import { FolderAttributes, folderModel } from './folder';
 import { MessageAttributes, messageModel } from './message';
 import { PageAttributes, pageModel } from './page';
+import { PresentationAttributes, presentationModel } from './presentation';
 import { RecordAttributes, recordModel } from './record';
 import { SpaceAttributes, spaceModel } from './space';
 
@@ -34,6 +35,8 @@ export type FolderNode = NodeBase & FolderAttributes;
 
 export type PageNode = NodeBase & PageAttributes;
 
+export type PresentationNode = NodeBase & PresentationAttributes;
+
 export type RecordNode = NodeBase & RecordAttributes;
 
 export type SpaceNode = NodeBase & SpaceAttributes;
@@ -52,6 +55,7 @@ export type NodeAttributes =
   | ChatAttributes
   | FolderAttributes
   | PageAttributes
+  | PresentationAttributes
   | RecordAttributes
   | MessageAttributes
   | FileAttributes
@@ -66,6 +70,7 @@ export type Node =
   | ChatNode
   | FolderNode
   | PageNode
+  | PresentationNode
   | RecordNode
   | MessageNode
   | FileNode;
@@ -86,6 +91,8 @@ export const getNodeModel = (type: NodeType) => {
       return folderModel;
     case 'page':
       return pageModel;
+    case 'presentation':
+      return presentationModel;
     case 'record':
       return recordModel;
     case 'space':

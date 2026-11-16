@@ -11,6 +11,7 @@ import { NodeBreadcrumb } from '@colanode/ui/components/nodes/node-breadcrumb';
 import { NodeProvider } from '@colanode/ui/components/nodes/node-provider';
 import { NodeSettings } from '@colanode/ui/components/nodes/node-settings';
 import { PageContainer } from '@colanode/ui/components/pages/page-container';
+import { PresentationContainer } from '@colanode/ui/components/presentations/presentation-container';
 import { RecordContainer } from '@colanode/ui/components/records/record-container';
 import { SpaceContainer } from '@colanode/ui/components/spaces/space-container';
 import { ContainerType } from '@colanode/ui/contexts/container';
@@ -37,6 +38,7 @@ const NodeContent = ({ type, onFullscreen }: NodeContentProps) => {
       breadcrumb={<NodeBreadcrumb nodes={data.breadcrumb} />}
       actions={<NodeSettings node={data.node} role={data.role} />}
       onFullscreen={onFullscreen}
+      flush={data.node.type === 'presentation'}
     >
       {data.node.type === 'space' && (
         <SpaceContainer space={data.node} role={data.role} />
@@ -46,6 +48,9 @@ const NodeContent = ({ type, onFullscreen }: NodeContentProps) => {
       )}
       {data.node.type === 'page' && (
         <PageContainer page={data.node} role={data.role} />
+      )}
+      {data.node.type === 'presentation' && (
+        <PresentationContainer presentation={data.node} role={data.role} />
       )}
       {data.node.type === 'database' && (
         <DatabaseContainer database={data.node} role={data.role} />

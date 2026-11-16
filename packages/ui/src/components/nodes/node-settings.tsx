@@ -6,6 +6,7 @@ import { DatabaseSettings } from '@colanode/ui/components/databases/database-set
 import { FileSettings } from '@colanode/ui/components/files/file-settings';
 import { FolderSettings } from '@colanode/ui/components/folders/folder-settings';
 import { PageSettings } from '@colanode/ui/components/pages/page-settings';
+import { PresentationSettings } from '@colanode/ui/components/presentations/presentation-settings';
 import { RecordSettings } from '@colanode/ui/components/records/record-settings';
 
 interface NodeSettingsProps {
@@ -36,6 +37,10 @@ export const NodeSettings = ({ node, role }: NodeSettingsProps) => {
 
   if (node.type === 'page') {
     return <PageSettings page={node} role={role} />;
+  }
+
+  if (node.type === 'presentation') {
+    return <PresentationSettings presentation={node} role={role} />;
   }
 
   if (node.type === 'record') {

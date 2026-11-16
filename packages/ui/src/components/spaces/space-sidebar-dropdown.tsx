@@ -4,6 +4,7 @@ import {
   Ellipsis,
   Folder,
   MessageCircle,
+  Presentation,
   Plus,
   Settings,
   SquareStack,
@@ -17,6 +18,7 @@ import { ChannelCreateDialog } from '@colanode/ui/components/channels/channel-cr
 import { DatabaseCreateDialog } from '@colanode/ui/components/databases/database-create-dialog';
 import { FolderCreateDialog } from '@colanode/ui/components/folders/folder-create-dialog';
 import { PageCreateDialog } from '@colanode/ui/components/pages/page-create-dialog';
+import { PresentationCreateDialog } from '@colanode/ui/components/presentations/presentation-create-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +36,7 @@ export const SpaceSidebarDropdown = ({ space }: SpaceSidebarDropdownProps) => {
   const navigate = useNavigate({ from: '/workspace/$userId' });
 
   const [openCreatePage, setOpenCreatePage] = useState(false);
+  const [openCreatePresentation, setOpenCreatePresentation] = useState(false);
   const [openCreateChannel, setOpenCreateChannel] = useState(false);
   const [openCreateDatabase, setOpenCreateDatabase] = useState(false);
   const [openCreateFolder, setOpenCreateFolder] = useState(false);
@@ -56,6 +59,13 @@ export const SpaceSidebarDropdown = ({ space }: SpaceSidebarDropdownProps) => {
           >
             <StickyNote className="size-4" />
             <span>Add page</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => setOpenCreatePresentation(true)}
+            className="flex flex-row items-center gap-2 cursor-pointer"
+          >
+            <Presentation className="size-4" />
+            <span>Add presentation</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => setOpenCreateChannel(true)}
@@ -126,6 +136,14 @@ export const SpaceSidebarDropdown = ({ space }: SpaceSidebarDropdownProps) => {
           rootId={space.id}
           open={openCreatePage}
           onOpenChange={setOpenCreatePage}
+        />
+      )}
+      {openCreatePresentation && (
+        <PresentationCreateDialog
+          parentId={space.id}
+          rootId={space.id}
+          open={openCreatePresentation}
+          onOpenChange={setOpenCreatePresentation}
         />
       )}
       {openCreateDatabase && (

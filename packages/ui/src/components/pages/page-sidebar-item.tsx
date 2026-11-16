@@ -31,7 +31,7 @@ export const PageSidebarItem = ({ page, role }: PageSidebarItemProps) => {
         .from({ nodes: workspace.collections.nodes })
         .where(({ nodes }) => eq(nodes.parentId, page.id))
         .where(({ nodes }) =>
-          inArray(nodes.type, ['page', 'database', 'folder'])
+          inArray(nodes.type, ['page', 'presentation', 'database', 'folder'])
         )
         .orderBy(({ nodes }) => nodes.id, 'asc'),
     [workspace.userId, page.id]

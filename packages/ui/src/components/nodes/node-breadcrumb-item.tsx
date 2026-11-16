@@ -6,6 +6,7 @@ import { FileBreadcrumbItem } from '@colanode/ui/components/files/file-breadcrum
 import { FolderBreadcrumbItem } from '@colanode/ui/components/folders/folder-breadcrumb-item';
 import { MessageBreadcrumbItem } from '@colanode/ui/components/messages/message-breadcrumb-item';
 import { PageBreadcrumbItem } from '@colanode/ui/components/pages/page-breadcrumb-item';
+import { PresentationBreadcrumbItem } from '@colanode/ui/components/presentations/presentation-breadcrumb-item';
 import { RecordBreadcrumbItem } from '@colanode/ui/components/records/record-breadcrumb-item';
 import { SpaceBreadcrumbItem } from '@colanode/ui/components/spaces/space-breadcrumb-item';
 
@@ -23,6 +24,8 @@ export const NodeBreadcrumbItem = ({ node }: NodeBreadcrumbItemProps) => {
       return <ChatBreadcrumbItem chat={node} />;
     case 'page':
       return <PageBreadcrumbItem page={node} />;
+    case 'presentation':
+      return <PresentationBreadcrumbItem presentation={node} />;
     case 'database':
       return <DatabaseBreadcrumbItem database={node} />;
     case 'record':

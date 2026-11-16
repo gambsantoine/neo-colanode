@@ -1,0 +1,212 @@
+import 'reveal.js/reveal.css';
+import '@colanode/ui/styles/highlight.css';
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Reveal from 'reveal.js';
+
+import {
+  buildRevealSlidesHtml,
+  findRevealIndex,
+  RevealDeck,
+} from '@colanode/ui/lib/reveal';
+import {
+  getRevealThemeClass,
+  loadRevealTheme,
+} from '@colanode/ui/lib/reveal-themes';
+import { renderMermaidPlaceholders } from '@colanode/ui/lib/slides-mermaid';
+import { cn } from '@colanode/ui/lib/utils';
+
+type RevealApi = InstanceType<typeof Reveal>;
+
+interface RevealViewProps {
+  deck: RevealDeck;
+  index: number;
+  onIndexChange?: (index: number) => void;
+  // Full screen presentation: keyboard shortcuts, overview, slide numbers.
+  interactive?: boolean;
+  className?: string;
+}
+
+// A deck displayed by the Reveal.js engine, embedded in its parent.
+export const RevealView = ({
+  deck,
+  index,
+  onIndexChange,
+  interactive = false,
+  className,
+}: RevealViewProps) => {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const revealRef = useRef<HTMLDivElement>(null);
+  const slidesRef = useRef<HTMLDivElement>(null);
+  const apiRef = useRef<RevealApi | null>(null);
+  const [ready, setReady] = useState(false);
+  const [themeLoaded, setThemeLoaded] = useState<string | null>(null);
+
+  const html = useMemo(() => buildRevealSlidesHtml(deck), [deck]);
+  const theme = deck.config.theme;
+
+  const deckRef = useRef(deck);
+  deckRef.current = deck;
+  const onIndexChangeRef = useRef(onIndexChange);
+  onIndexChangeRef.current = onIndexChange;
+
+  useEffect(() => {
+    let cancelled = false;
+    loadRevealTheme(theme)
+      .catch(() => undefined)
+      .then(() => {
+        if (!cancelled) {
+          setThemeLoaded(theme);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [theme]);
+
+  // The engine is created once; slides and options are updated in place.
+  useEffect(() => {
+    const element = revealRef.current;
+    const slides = slidesRef.current;
+    if (!element || !slides) {
+      return;
+    }
+
+    slides.innerHTML = html;
+    const config = deckRef.current.config;
+    const api = new Reveal(element, {
+      embedded: true,
+      hash: false,
+      history: false,
+      respondToHashChanges: false,
+      fragmentInURL: false,
+      keyboard: interactive,
+      overview: interactive,
+      touch: interactive,
+      help: false,
+      mouseWheel: false,
+      previewLinks: false,
+      controls: config.controls,
+      controlsTutorial: false,
+      progress: config.progress,
+      slideNumber: interactive && config.slideNumber ? 'c/t' : false,
+      transition: config.transition,
+      center: config.center,
+      // The preview shows every fragment, the presentation reveals them.
+      fragments: interactive,
+      plugins: [],
+    });
+
+    let destroyed = false;
+    api.initialize().then(() => {
+      if (destroyed) {
+        return;
+      }
+
+      apiRef.current = api;
+      api.on('slidechanged', (event) => {
+        const { indexh, indexv } = event as unknown as {
+          indexh: number;
+          indexv: number;
+        };
+        onIndexChangeRef.current?.(
+          findRevealIndex(deckRef.current, indexh, indexv)
+        );
+      });
+      setReady(true);
+    });
+
+    return () => {
+      destroyed = true;
+      apiRef.current = null;
+      setReady(false);
+      try {
+        api.destroy();
+      } catch {
+        // Not initialized yet.
+      }
+    };
+  }, [interactive]);
+
+  // New content: the slides are replaced and the position kept.
+  useEffect(() => {
+    const api = apiRef.current;
+    const slides = slidesRef.current;
+    if (!api || !slides || !ready) {
+      return;
+    }
+
+    const { h, v } = api.getIndices();
+    slides.innerHTML = html;
+    api.sync();
+    api.slide(h, v);
+  }, [html, ready]);
+
+  useEffect(() => {
+    const api = apiRef.current;
+    if (!api || !ready) {
+      return;
+    }
+
+    const { config } = deck;
+    api.configure({
+      controls: config.controls,
+      progress: config.progress,
+      transition: config.transition,
+      center: config.center,
+      slideNumber: interactive && config.slideNumber ? 'c/t' : false,
+    });
+  }, [deck, interactive, ready]);
+
+  // Follows the slide selected outside (editor caret...).
+  useEffect(() => {
+    const api = apiRef.current;
+    const slide = deck.slides[index];
+    if (!api || !ready || !slide) {
+      return;
+    }
+
+    const { h, v } = api.getIndices();
+    if (h !== slide.h || (v ?? 0) !== slide.v) {
+      api.slide(slide.h, slide.v);
+    }
+  }, [index, deck, ready]);
+
+  useEffect(() => {
+    const element = revealRef.current;
+    if (!element || !ready) {
+      return;
+    }
+
+    return renderMermaidPlaceholders(element, deck.dark);
+  }, [html, deck.dark, ready]);
+
+  // Reveal only listens to window resizes.
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => apiRef.current?.layout());
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={viewportRef}
+      className={cn(
+        'reveal-viewport relative h-full w-full overflow-hidden',
+        getRevealThemeClass(theme),
+        themeLoaded !== theme && 'invisible',
+        className
+      )}
+    >
+      <div ref={revealRef} className="reveal">
+        <div ref={slidesRef} className="slides" />
+      </div>
+    </div>
+  );
+};

@@ -8,6 +8,7 @@ import {
   DatabaseNode,
   ChatNode,
   PageNode,
+  PresentationNode,
   SpaceNode,
   MessageNode,
   RecordNode,
@@ -51,9 +52,7 @@ export type NodeReference = {
 };
 
 export type NodeCounterType =
-  | 'unread.mentions'
-  | 'unread.messages.silent'
-  | 'unread.messages.important';
+  'unread.mentions' | 'unread.messages.silent' | 'unread.messages.important';
 
 export type NodeCounter = {
   nodeId: string;
@@ -73,6 +72,8 @@ export type LocalChannelNode = ChannelNode & LocalNodeBase;
 export type LocalChatNode = ChatNode & LocalNodeBase;
 
 export type LocalPageNode = PageNode & LocalNodeBase;
+
+export type LocalPresentationNode = PresentationNode & LocalNodeBase;
 
 export type LocalDatabaseNode = DatabaseNode & LocalNodeBase;
 
@@ -97,6 +98,7 @@ export type LocalNode =
   | LocalFileNode
   | LocalFolderNode
   | LocalPageNode
+  | LocalPresentationNode
   | LocalRecordNode
   | LocalMessageNode
   | LocalSpaceNode;

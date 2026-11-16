@@ -11,6 +11,7 @@ export const defaultIcons = {
   database: '01jhzfk3d19d8enym86tat3ybeic',
   bookmark: '01jhzfk3g4q40x7927qcm0hrjdic',
   folder: '01jhzfk3jrgc276z2gdabm4cwmic',
+  presentation: '01jhzfk345feedwb4gdvbcgkpyic',
   apps: '01jhzfk4m7djqd1pw0e1671cmric',
   login: '01jhzfk4ppvzdambh6hyw0mv91ic',
   logout: '01jhzfk4pv13qxjprqgqfeqp73ic',
