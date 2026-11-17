@@ -14,6 +14,7 @@ import { Button } from '@colanode/ui/components/ui/button';
 import { Input } from '@colanode/ui/components/ui/input';
 import { Label } from '@colanode/ui/components/ui/label';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
+import { useDebouncedValue } from '@colanode/ui/hooks/use-debounced-value';
 import { useMutation } from '@colanode/ui/hooks/use-mutation';
 import { useQuery } from '@colanode/ui/hooks/use-query';
 import { cn } from '@colanode/ui/lib/utils';
@@ -48,15 +49,6 @@ const MODES: {
     icon: Globe,
   },
 ];
-
-const useDebounced = <T,>(value: T, delay: number): T => {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timeout = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timeout);
-  }, [value, delay]);
-  return debounced;
-};
 
 const CopyField = ({ id, value }: { id: string; value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -114,7 +106,7 @@ export const WikiPublication = ({ wiki, role }: WikiPublicationProps) => {
   }, [publication?.access, publication?.slug]);
 
   const normalizedSlug = slug.trim().toLowerCase();
-  const debouncedSlug = useDebounced(normalizedSlug, 400);
+  const debouncedSlug = useDebouncedValue(normalizedSlug, 400);
   const slugValid = isValidWikiSlug(normalizedSlug);
   const availabilityQuery = useQuery(
     {
