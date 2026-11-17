@@ -68,6 +68,11 @@ export const verifyWikiLinkToken = (
 
 // Base address of the server (scheme, host and path prefix).
 export const buildServerBaseUrl = (request: FastifyRequest): string => {
+  if (config.publicUrl) {
+    const prefix = config.pathPrefix ? `/${config.pathPrefix}` : '';
+    return `${config.publicUrl.replace(/\/+$/, '')}${prefix}`;
+  }
+
   const port =
     request.port && request.port != 80 && request.port != 443
       ? `:${request.port}`

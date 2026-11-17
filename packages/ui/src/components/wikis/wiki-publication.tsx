@@ -116,9 +116,13 @@ export const WikiPublication = ({ wiki, role }: WikiPublicationProps) => {
       slug: debouncedSlug,
     },
     {
+      // Only once the stored publication is known and typing has paused:
+      // otherwise the address derived from the name is checked for nothing.
       enabled:
         isAdmin &&
+        publicationQuery.data !== undefined &&
         mode !== 'private' &&
+        debouncedSlug === normalizedSlug &&
         isValidWikiSlug(debouncedSlug) &&
         debouncedSlug !== publication?.slug,
     }

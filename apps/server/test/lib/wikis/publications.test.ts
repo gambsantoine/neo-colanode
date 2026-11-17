@@ -18,6 +18,7 @@ import {
 
 const mockConfig = vi.hoisted(() => ({
   pathPrefix: undefined as string | undefined,
+  publicUrl: undefined as string | undefined,
 }));
 
 vi.mock('@colanode/server/lib/config', () => ({ config: mockConfig }));
@@ -49,6 +50,7 @@ const request = (values: {
 
 beforeEach(() => {
   mockConfig.pathPrefix = undefined;
+  mockConfig.publicUrl = undefined;
 });
 
 describe('wiki link tokens', () => {
@@ -265,5 +267,23 @@ describe('readCookie', () => {
 
   it('returns the first matching cookie', () => {
     expect(readCookie('t=first; t=second', 't')).toBe('first');
+  });
+});
+
+describe('configured public address', () => {
+  it('prefers the configured public address over the Host header', () => {
+    mockConfig.publicUrl = 'https://api.example.com/';
+    mockConfig.pathPrefix = 'colanode';
+    const request = {
+      protocol: 'http',
+      hostname: 'attacker.test',
+      port: 80,
+    } as unknown as Parameters<typeof buildServerBaseUrl>[0];
+
+    expect(buildServerBaseUrl(request)).toBe(
+      'https://api.example.com/colanode'
+    );
+    mockConfig.publicUrl = undefined;
+    mockConfig.pathPrefix = undefined;
   });
 });

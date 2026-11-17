@@ -613,6 +613,7 @@ describe('components/wikis/WikiPublication', () => {
   describe('address availability', () => {
     it('debounces the availability check', () => {
       vi.useFakeTimers();
+      state.publicationData = { publication: null };
       renderPublication();
 
       fireEvent.click(screen.getByRole('radio', { name: /Public/ }));
@@ -646,6 +647,13 @@ describe('components/wikis/WikiPublication', () => {
       expect(lastQuery('wiki.slug.availability')?.input.slug).toBe(
         'other-docs'
       );
+    });
+
+    it('waits for the stored publication before checking an address', () => {
+      renderPublication();
+      fireEvent.click(screen.getByRole('radio', { name: /Public/ }));
+
+      expect(lastQuery('wiki.slug.availability')?.options?.enabled).toBe(false);
     });
 
     it('restarts the debounce on each change', () => {
