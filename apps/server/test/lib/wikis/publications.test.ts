@@ -12,7 +12,8 @@ import {
   parseWikiLinkToken,
   readCookie,
   verifyWikiLinkToken,
-  WIKI_ACCESS_COOKIE,
+  wikiAccessCookieName,
+  wikiAccessCookiePath,
 } from '@colanode/server/lib/wikis/publications';
 
 const mockConfig = vi.hoisted(() => ({
@@ -222,8 +223,9 @@ describe('mapWikiPublication', () => {
 });
 
 describe('readCookie', () => {
-  it('exposes the access cookie name', () => {
-    expect(WIKI_ACCESS_COOKIE).toBe('colanode_wiki');
+  it('names the access cookie after the wiki and scopes it to all wikis', () => {
+    expect(wikiAccessCookieName('wiki1')).toBe('colanode_wiki_wiki1');
+    expect(wikiAccessCookiePath()).toBe('/wiki/');
   });
 
   it('returns null without header', () => {

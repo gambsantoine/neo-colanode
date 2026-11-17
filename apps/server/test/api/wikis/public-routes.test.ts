@@ -29,6 +29,12 @@ vi.mock('@colanode/server/data/redis', async () => {
   return { redis: helpers.fakeRedis };
 });
 
+// A new version on every request: each test sees the fake database as it
+// is, without the cache of the previous one.
+vi.mock('@colanode/server/lib/wikis/version', () => ({
+  fetchWikiVersion: vi.fn(async () => `v-${Math.random()}`),
+}));
+
 vi.mock('@colanode/server/lib/storage', () => ({
   storage: { download: vi.fn() },
 }));
@@ -113,7 +119,7 @@ describe('GET /s/:token', () => {
     expect(response.statusCode).toBe(302);
     expect(response.headers.location).toBe('/wiki/docs');
     expect(response.headers['set-cookie']).toBe(
-      `colanode_wiki=${token}; Path=/wiki/docs; HttpOnly; SameSite=Lax; Max-Age=7776000`
+      `colanode_wiki_${WIKI_ID}=${token}; Path=/wiki/; HttpOnly; SameSite=Lax; Max-Age=7776000`
     );
     expect(response.headers['referrer-policy']).toBe('no-referrer');
     expect(response.headers['x-robots-tag']).toBe('noindex, nofollow');
@@ -247,7 +253,9 @@ describe('GET /wiki/:slug/_files/:fileId/:name', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/wiki/docs/_files/file-img/diagram.png',
-      headers: { cookie: `colanode_wiki=${encodeURIComponent(token)}` },
+      headers: {
+        cookie: `colanode_wiki_${WIKI_ID}=${encodeURIComponent(token)}`,
+      },
     });
 
     expect(response.statusCode).toBe(200);
@@ -385,7 +393,7 @@ describe('GET /wiki/:slug/sitemap.xml', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/wiki/docs/sitemap.xml',
-      headers: { cookie: `colanode_wiki=${token}` },
+      headers: { cookie: `colanode_wiki_${WIKI_ID}=${token}` },
     });
     expect(response.statusCode).toBe(404);
   });
@@ -482,7 +490,7 @@ describe('GET /wiki/:slug and /wiki/:slug/*', () => {
     const wrong = await app.inject({
       method: 'GET',
       url: '/wiki/docs',
-      headers: { cookie: 'colanode_wiki=cwl_invalid' },
+      headers: { cookie: `colanode_wiki_${WIKI_ID}=cwl_invalid` },
     });
     expect(wrong.statusCode).toBe(404);
 
@@ -490,7 +498,7 @@ describe('GET /wiki/:slug and /wiki/:slug/*', () => {
       method: 'GET',
       url: '/wiki/docs/guides',
       headers: {
-        cookie: `other=1; colanode_wiki=${encodeURIComponent(token)}`,
+        cookie: `other=1; colanode_wiki_${WIKI_ID}=${encodeURIComponent(token)}`,
       },
     });
     expect(reader.statusCode).toBe(200);

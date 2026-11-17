@@ -158,6 +158,17 @@ export const syncWikiRoutes = async (wiki: PublishedWiki): Promise<void> => {
         }))
       )
       .execute();
+
+    // Old addresses only matter while their node exists: this keeps the
+    // history of renames without growing forever.
+    await trx
+      .deleteFrom('wiki_routes')
+      .where('wiki_id', '=', wiki.wiki.id)
+      .where('is_current', '=', false)
+      .where('node_id', 'not in', (eb) =>
+        eb.selectFrom('nodes').select('id').where('root_id', '=', wiki.wiki.id)
+      )
+      .execute();
   });
 
   try {
@@ -641,34 +652,51 @@ export interface WikiSearchResult {
   excerpt: string;
 }
 
+// Plain text of every public document of the wiki, for the search. Callers
+// cache it per wiki version: it is the expensive part of a search.
+export const loadWikiTexts = async (
+  wiki: PublishedWiki
+): Promise<Map<string, string>> => {
+  const ids = [...wiki.tree.paths.keys()].filter((id) => id !== wiki.wiki.id);
+  const texts = new Map<string, string>();
+
+  // Batches keep the `in (...)` lists of a large wiki reasonable.
+  for (let start = 0; start < ids.length; start += 500) {
+    const documents = await database
+      .selectFrom('documents')
+      .select(['id', 'content'])
+      .where('id', 'in', ids.slice(start, start + 500))
+      .execute();
+
+    for (const document of documents) {
+      texts.set(
+        document.id,
+        extractDocumentText(document.id, document.content) ?? ''
+      );
+    }
+  }
+
+  return texts;
+};
+
+export const MAX_SEARCH_TERMS = 8;
+
 export const searchWiki = async (
   wiki: PublishedWiki,
-  query: string
+  query: string,
+  cachedTexts?: Map<string, string>
 ): Promise<WikiSearchResult[]> => {
   const terms = query
     .toLowerCase()
     .split(/\s+/)
     .filter((term) => term.length > 1)
-    .slice(0, 8);
+    .slice(0, MAX_SEARCH_TERMS);
   if (terms.length === 0) {
     return [];
   }
 
   const ids = [...wiki.tree.paths.keys()].filter((id) => id !== wiki.wiki.id);
-  const documents =
-    ids.length > 0
-      ? await database
-          .selectFrom('documents')
-          .select(['id', 'content'])
-          .where('id', 'in', ids)
-          .execute()
-      : [];
-  const texts = new Map(
-    documents.map((document) => [
-      document.id,
-      extractDocumentText(document.id, document.content) ?? '',
-    ])
-  );
+  const texts = cachedTexts ?? (await loadWikiTexts(wiki));
 
   const results: (WikiSearchResult & { score: number })[] = [];
   for (const id of ids) {

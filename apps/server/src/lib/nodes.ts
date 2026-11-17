@@ -30,6 +30,7 @@ import {
 import { eventBus } from '@colanode/server/lib/event-bus';
 import { createLogger } from '@colanode/server/lib/logger';
 import { storage } from '@colanode/server/lib/storage';
+import { deleteWikiPublication } from '@colanode/server/lib/wikis/cleanup';
 import { jobService } from '@colanode/server/services/job-service';
 import { WorkspaceContext } from '@colanode/server/types/api';
 import {
@@ -698,6 +699,11 @@ export const deleteNodeFromMutation = async (
       deletedNode,
     };
   });
+
+  // A deleted wiki is no longer published and frees its address.
+  if (deletedNode.type === 'wiki') {
+    await deleteWikiPublication(deletedNode.id);
+  }
 
   if (deletedNode.type === 'file') {
     const upload = await database

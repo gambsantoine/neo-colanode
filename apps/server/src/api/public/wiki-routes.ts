@@ -10,7 +10,10 @@ import { database } from '@colanode/server/data/database';
 import { SelectWikiPublication } from '@colanode/server/data/schema';
 import { config } from '@colanode/server/lib/config';
 import { createLogger } from '@colanode/server/lib/logger';
-import { isPublicIpRateLimited } from '@colanode/server/lib/rate-limits';
+import {
+  isPublicIpRateLimited,
+  isPublicSearchRateLimited,
+} from '@colanode/server/lib/rate-limits';
 import { storage } from '@colanode/server/lib/storage';
 import { escapeHtml } from '@colanode/server/lib/wikis/html';
 import {
@@ -24,18 +27,21 @@ import {
   parseWikiLinkToken,
   readCookie,
   verifyWikiLinkToken,
-  WIKI_ACCESS_COOKIE,
+  wikiAccessCookieName,
+  wikiAccessCookiePath,
 } from '@colanode/server/lib/wikis/publications';
+import {
+  getReadableWiki,
+  getWikiNodeContent,
+  getWikiTexts,
+  ReadableWiki,
+} from '@colanode/server/lib/wikis/readable';
 import { INLINE_IMAGE_TYPES } from '@colanode/server/lib/wikis/render-blocks';
 import {
   fetchWikiPublicationBySlug,
   isPublicFile,
-  loadPublishedWiki,
-  PublishedWiki,
-  renderWikiNodeContent,
   resolveWikiPath,
   searchWiki,
-  syncWikiRoutes,
   wikiHref,
 } from '@colanode/server/lib/wikis/service';
 
@@ -64,7 +70,7 @@ const setPageHeaders = (
   reply.header('Content-Security-Policy', buildWikiCsp(nonce));
   reply.header('X-Content-Type-Options', 'nosniff');
   reply.header('Referrer-Policy', 'same-origin');
-  reply.header('Cache-Control', 'no-cache');
+  reply.header('Cache-Control', indexable ? 'no-cache' : 'private, no-cache');
   if (!indexable) {
     reply.header('X-Robots-Tag', 'noindex, nofollow');
   }
@@ -88,7 +94,10 @@ const hasReaderAccess = (
     return true;
   }
 
-  const token = readCookie(request.headers.cookie, WIKI_ACCESS_COOKIE);
+  const token = readCookie(
+    request.headers.cookie,
+    wikiAccessCookieName(publication.wiki_id)
+  );
   return verifyWikiLinkToken(publication, token);
 };
 
@@ -97,7 +106,7 @@ const hasReaderAccess = (
 const loadReadableWiki = async (
   request: FastifyRequest,
   slug: string
-): Promise<PublishedWiki | null> => {
+): Promise<ReadableWiki | null> => {
   if (!isValidWikiSlug(slug)) {
     return null;
   }
@@ -107,25 +116,27 @@ const loadReadableWiki = async (
     return null;
   }
 
-  const wiki = await loadPublishedWiki(publication, buildWikiPathPrefix(slug));
-  if (!wiki) {
-    return null;
-  }
+  return getReadableWiki(publication, buildWikiPathPrefix(slug));
+};
 
+const isRateLimitedSafely = async (
+  check: (ip: string) => Promise<boolean>,
+  ip: string
+): Promise<boolean> => {
   try {
-    await syncWikiRoutes(wiki);
+    return await check(ip);
   } catch (error) {
-    logger.error(error, `Failed to sync routes of wiki ${wiki.wiki.id}`);
+    // Readers keep access when Redis is unavailable.
+    logger.warn(error, 'Rate limit unavailable for public wiki');
+    return false;
   }
-
-  return wiki;
 };
 
 type WikiParams = { slug: string; '*'?: string };
 
 export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
   instance.addHook('onRequest', async (request, reply) => {
-    if (await isPublicIpRateLimited(request.client.ip)) {
+    if (await isRateLimitedSafely(isPublicIpRateLimited, request.client.ip)) {
       return reply
         .code(429)
         .type('text/plain')
@@ -156,15 +167,15 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
         return sendNotFound(reply);
       }
 
-      const cookiePath = buildWikiPathPrefix(publication.slug);
+      const cookieName = wikiAccessCookieName(publication.wiki_id);
       const secure = request.protocol === 'https' ? '; Secure' : '';
       reply.header(
         'Set-Cookie',
-        `${WIKI_ACCESS_COOKIE}=${encodeURIComponent(request.params.token)}; Path=${cookiePath}; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 90}${secure}`
+        `${cookieName}=${encodeURIComponent(request.params.token)}; Path=${wikiAccessCookiePath()}; HttpOnly; SameSite=Lax; Max-Age=${60 * 60 * 24 * 90}${secure}`
       );
       reply.header('Referrer-Policy', 'no-referrer');
       reply.header('X-Robots-Tag', 'noindex, nofollow');
-      return reply.redirect(cookiePath, 302);
+      return reply.redirect(buildWikiPathPrefix(publication.slug), 302);
     }
   );
 
@@ -188,7 +199,8 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
   instance.get<{ Params: { slug: string; fileId: string; name: string } }>(
     '/wiki/:slug/_files/:fileId/:name',
     async (request, reply) => {
-      const wiki = await loadReadableWiki(request, request.params.slug);
+      const entry = await loadReadableWiki(request, request.params.slug);
+      const wiki = entry?.wiki ?? null;
       const file = wiki ? isPublicFile(wiki, request.params.fileId) : null;
       if (!wiki || !file) {
         return sendNotFound(reply);
@@ -243,13 +255,30 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
   instance.get<{ Params: { slug: string }; Querystring: { q?: string } }>(
     '/wiki/:slug/_search',
     async (request, reply) => {
-      const wiki = await loadReadableWiki(request, request.params.slug);
+      const entry = await loadReadableWiki(request, request.params.slug);
+      const wiki = entry?.wiki ?? null;
       if (!wiki) {
         return sendNotFound(reply);
       }
 
       const query = String(request.query.q ?? '').slice(0, 200);
-      const results = query ? await searchWiki(wiki, query) : [];
+      if (
+        query &&
+        (await isRateLimitedSafely(
+          isPublicSearchRateLimited,
+          request.client.ip
+        ))
+      ) {
+        return reply
+          .code(429)
+          .type('text/plain')
+          .send('Trop de recherches, réessayez dans quelques minutes.');
+      }
+
+      const results =
+        query && entry
+          ? await searchWiki(wiki, query, await getWikiTexts(entry))
+          : [];
       const list = results
         .map(
           (result) =>
@@ -286,7 +315,8 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
   instance.get<{ Params: { slug: string } }>(
     '/wiki/:slug/sitemap.xml',
     async (request, reply) => {
-      const wiki = await loadReadableWiki(request, request.params.slug);
+      const entry = await loadReadableWiki(request, request.params.slug);
+      const wiki = entry?.wiki ?? null;
       if (!wiki || wiki.publication.access !== 'public') {
         return sendNotFound(reply);
       }
@@ -313,8 +343,9 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
     request: FastifyRequest<{ Params: WikiParams }>,
     reply: FastifyReply
   ) => {
-    const wiki = await loadReadableWiki(request, request.params.slug);
-    if (!wiki) {
+    const entry = await loadReadableWiki(request, request.params.slug);
+    const wiki = entry?.wiki ?? null;
+    if (!entry || !wiki) {
       return sendNotFound(reply);
     }
 
@@ -331,7 +362,18 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
       return reply.redirect(target, 301);
     }
 
-    const content = await renderWikiNodeContent(wiki, resolution.nodeId);
+    // Unchanged wiki: the browser keeps its copy (no rendering at all).
+    const etag = `W/"${entry.version}-${resolution.nodeId}"`;
+    reply.header('ETag', etag);
+    if (request.headers['if-none-match'] === etag) {
+      reply.header(
+        'Cache-Control',
+        wiki.publication.access === 'public' ? 'no-cache' : 'private, no-cache'
+      );
+      return reply.code(304).send();
+    }
+
+    const content = await getWikiNodeContent(entry, resolution.nodeId);
     const indexable = wiki.publication.access === 'public';
     const href = wikiHref(wiki, resolution.nodeId);
     const origin = buildServerBaseUrl(request).replace(

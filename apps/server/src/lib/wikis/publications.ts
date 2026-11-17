@@ -9,7 +9,17 @@ import { uuid } from '@colanode/server/lib/utils';
 const WIKI_LINK_TOKEN_PREFIX = 'cwl_';
 const ID_LENGTH = 28;
 
-export const WIKI_ACCESS_COOKIE = 'colanode_wiki';
+const WIKI_ACCESS_COOKIE = 'colanode_wiki';
+
+// One cookie per wiki, scoped to every wiki address: changing the address
+// of a wiki keeps its readers signed in.
+export const wikiAccessCookieName = (wikiId: string): string =>
+  `${WIKI_ACCESS_COOKIE}_${wikiId}`;
+
+export const wikiAccessCookiePath = (): string => {
+  const prefix = config.pathPrefix ? `/${config.pathPrefix}` : '';
+  return `${prefix}/wiki/`;
+};
 
 export const generateWikiLinkToken = (wikiId: string) => {
   const salt = uuid();

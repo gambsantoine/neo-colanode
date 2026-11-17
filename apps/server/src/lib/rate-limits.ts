@@ -96,3 +96,13 @@ export const isPublicIpRateLimited = async (ip: string): Promise<boolean> => {
     window: 300, // 5 minutes
   });
 };
+
+// Searches read every document of a wiki: kept well below page views.
+export const isPublicSearchRateLimited = async (
+  ip: string
+): Promise<boolean> => {
+  return await isRateLimited(`ps:${ip}`, {
+    limit: 60,
+    window: 300, // 5 minutes
+  });
+};

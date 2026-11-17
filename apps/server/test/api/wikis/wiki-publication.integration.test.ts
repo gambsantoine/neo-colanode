@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { generateId, IdType } from '@colanode/core';
+import { generateId, IdType, WorkspaceStatus } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
 import { updateNode } from '@colanode/server/lib/nodes';
+import { deleteWikiPublication } from '@colanode/server/lib/wikis/cleanup';
 
 import { buildTestApp } from '../../helpers/app';
 import {
@@ -276,5 +277,122 @@ describe('wiki publication (real database)', () => {
       url: `/wiki/${first.slug}`,
     });
     expect(gone.statusCode).toBe(404);
+  });
+
+  it('answers 304 while the wiki is unchanged, and refreshes after an edit', async () => {
+    const ctx = await setup(uniqueSuffix());
+    await app.inject({
+      method: 'PUT',
+      url: `${ctx.base}/publication`,
+      headers: ctx.headers,
+      payload: { slug: ctx.slug, access: 'public' },
+    });
+
+    const url = `/wiki/${ctx.slug}/guides/premiers-pas`;
+    const first = await app.inject({ method: 'GET', url });
+    const etag = String(first.headers.etag);
+    expect(etag).toMatch(/^W\//);
+
+    const unchanged = await app.inject({
+      method: 'GET',
+      url,
+      headers: { 'if-none-match': etag },
+    });
+    expect(unchanged.statusCode).toBe(304);
+
+    await database
+      .updateTable('documents')
+      .set({
+        revision: '999999',
+        content: JSON.stringify({
+          type: 'rich_text',
+          blocks: {
+            b: {
+              id: 'b',
+              type: 'paragraph',
+              parentId: ctx.pageId,
+              index: 'a0',
+              content: [{ type: 'text', text: 'Nouvelle version' }],
+            },
+          },
+        }),
+      })
+      .where('id', '=', ctx.pageId)
+      .execute();
+
+    const changed = await app.inject({
+      method: 'GET',
+      url,
+      headers: { 'if-none-match': etag },
+    });
+    expect(changed.statusCode).toBe(200);
+    expect(changed.body).toContain('Nouvelle version');
+  });
+
+  it('keeps link readers signed in when the address changes', async () => {
+    const ctx = await setup(uniqueSuffix());
+    await app.inject({
+      method: 'PUT',
+      url: `${ctx.base}/publication`,
+      headers: ctx.headers,
+      payload: { slug: ctx.slug, access: 'link' },
+    });
+    const link = await app.inject({
+      method: 'POST',
+      url: `${ctx.base}/publication/link`,
+      headers: ctx.headers,
+    });
+    const open = await app.inject({
+      method: 'GET',
+      url: new URL(link.json().linkUrl).pathname,
+    });
+    const setCookie = String(open.headers['set-cookie']);
+    expect(setCookie).toContain('Path=/wiki/;');
+    const cookie = setCookie.split(';')[0]!;
+
+    const renamedSlug = `${ctx.slug}-v2`;
+    await app.inject({
+      method: 'PUT',
+      url: `${ctx.base}/publication`,
+      headers: ctx.headers,
+      payload: { slug: renamedSlug, access: 'link' },
+    });
+
+    const reader = await app.inject({
+      method: 'GET',
+      url: `/wiki/${renamedSlug}`,
+      headers: { cookie },
+    });
+    expect(reader.statusCode).toBe(200);
+  });
+
+  it('stops serving a disabled workspace and frees a deleted wiki address', async () => {
+    const ctx = await setup(uniqueSuffix());
+    await app.inject({
+      method: 'PUT',
+      url: `${ctx.base}/publication`,
+      headers: ctx.headers,
+      payload: { slug: ctx.slug, access: 'public' },
+    });
+    expect(
+      (await app.inject({ method: 'GET', url: `/wiki/${ctx.slug}` })).statusCode
+    ).toBe(200);
+
+    await database
+      .updateTable('workspaces')
+      .set({ status: WorkspaceStatus.Inactive })
+      .where('id', '=', ctx.workspace.id)
+      .execute();
+    expect(
+      (await app.inject({ method: 'GET', url: `/wiki/${ctx.slug}` })).statusCode
+    ).toBe(404);
+
+    await deleteWikiPublication(ctx.wikiId);
+    const publication = await database
+      .selectFrom('wiki_publications')
+      .selectAll()
+      .where('slug', '=', ctx.slug)
+      .executeTakeFirst();
+    expect(publication).toBeUndefined();
   });
 });
