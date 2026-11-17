@@ -7,7 +7,7 @@
 # reseau (TRAEFIK_NETWORK, declare en external) et n'expose aucun port sur
 # l'hote. Postgres et Valkey restent sur un reseau interne non routable.
 #
-# Images publiees par .github/workflows/docker-publish.yml.
+# Images publiees par ../production/publish-images.sh.
 
 name: colanode
 

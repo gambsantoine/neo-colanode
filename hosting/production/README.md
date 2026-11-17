@@ -10,24 +10,19 @@ Internet ──► Caddy :443 ──► WEB_DOMAIN    ──► web:80
 
 ## Images
 
-Les images sont construites et publiées sur GitHub Container Registry par
-`.github/workflows/docker-publish.yml`, **uniquement lors de la création d'un tag
-`vX.Y.Z`** :
-
-| Image | Tags |
-| --- | --- |
-| `ghcr.io/gambsantoine/colanode-server` | `X.Y.Z`, `X.Y`, `X`, `latest`, `sha-<commit>` |
-| `ghcr.io/gambsantoine/colanode-web` | idem |
-
-Publier une version (depuis `main`) :
+La CI ne construit plus d'images. `publish-images.sh` construit les images server et
+web à partir du commit courant, puis les publie avec les tags `<version>` et `latest` :
 
 ```bash
-git checkout main && git pull
-git tag v1.0.0
-git push origin v1.0.0
+docker login ghcr.io -u gambsantoine   # mot de passe : PAT avec write:packages
+hosting/production/publish-images.sh 1.0.0
 ```
 
-> Au premier push, les packages GHCR sont **privés**. Pour les tirer sans
+Seul le code commité est inclus. `COLANODE_REGISTRY` change le registre et `PLATFORMS`
+les architectures (par défaut `linux/amd64`, par exemple
+`PLATFORMS=linux/amd64,linux/arm64`, ce qui demande un builder multi-plateforme).
+
+> Les packages GHCR sont **privés** à leur création. Pour les tirer sans
 > authentification : GitHub → Packages → `colanode-server` / `colanode-web` →
 > Package settings → Change visibility → Public. Sinon, sur le serveur :
 > `echo <PAT read:packages> | docker login ghcr.io -u gambsantoine --password-stdin`.
@@ -91,7 +86,7 @@ Points à revoir avant l'ouverture au public :
 ## Exploitation
 
 ```bash
-# Mise à jour
+# Mise à jour, après publication (voir « Images »)
 docker compose pull && docker compose up -d
 
 # Sauvegarde PostgreSQL

@@ -71,7 +71,7 @@
 | ⏳ | Recherche globale dans le workspace (Ctrl/Cmd+K, index FTS5 local) | |
 | ⏳ | Centre de notifications (mentions) + notifications desktop | |
 | ⏳ | Badge non-lu par espace dans le rail | |
-| 🚧 | Images Docker Neo Colanode (server + web sur ghcr.io) et déploiement de production | `.github/workflows/docker-publish.yml`, `hosting/production/` |
+| 🚧 | Déploiement de production (images Docker server + web publiées par script) | `hosting/production/` |
 | ⏳ | | |
 | ⏳ | | |
 
@@ -89,7 +89,7 @@ Neo Colanode s'appuie, comme Colanode, sur des **CRDT** (Conflict-free Replicate
 
 ## Auto-hébergement
 
-> Les images Docker Neo Colanode (`ghcr.io/<owner>/colanode-server` et `colanode-web`) et la configuration de production (`hosting/production/`) sont en cours de mise en place. En attendant, pour profiter des fonctionnalités du fork, lancez le serveur depuis les sources (voir [Lancer en local](#lancer-en-local)). Dans `hosting/docker/docker-compose.yaml`, le service `server` (image upstream) est commenté : seules les dépendances (Postgres, Redis, serveur mail, MinIO en option) sont démarrées.
+> Aucune image Docker Neo Colanode n'est construite par la CI. Pour profiter des fonctionnalités du fork, lancez le serveur depuis les sources (voir [Lancer en local](#lancer-en-local)) ou publiez vos images avec le script de [`hosting/production/`](hosting/production/README.md). Dans `hosting/docker/docker-compose.yaml`, le service `server` (image upstream) est commenté : seules les dépendances (Postgres, Redis, serveur mail, MinIO en option) sont démarrées.
 
 Le dossier [`hosting/`](hosting/) contient le fichier Docker Compose et les configurations de déploiement ; pour Kubernetes, voir [`hosting/kubernetes/`](hosting/kubernetes/) (charts Helm et documentation). Prérequis :
 

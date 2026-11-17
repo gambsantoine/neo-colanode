@@ -3,7 +3,7 @@
 #   cp .env.example .env   # then edit every value marked CHANGE_ME
 #   docker compose up -d
 #
-# Images are built and published by .github/workflows/docker-publish.yml.
+# Images are built and published by publish-images.sh.
 
 name: colanode
 
