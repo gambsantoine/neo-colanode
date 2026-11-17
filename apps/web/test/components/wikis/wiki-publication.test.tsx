@@ -50,6 +50,10 @@ vi.mock('@colanode/ui/hooks/use-mutation', () => ({
   useMutation: () => ({ mutate: mocks.mutate, isPending: state.isPending }),
 }));
 
+vi.mock('@colanode/ui/components/wikis/wiki-publication-notice', () => ({
+  WikiPublicationNotice: () => <p>publication notice</p>,
+}));
+
 vi.mock('sonner', () => ({
   toast: { success: mocks.toastSuccess, error: mocks.toastError },
 }));

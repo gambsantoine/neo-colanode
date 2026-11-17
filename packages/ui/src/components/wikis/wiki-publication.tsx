@@ -13,6 +13,7 @@ import {
 import { Button } from '@colanode/ui/components/ui/button';
 import { Input } from '@colanode/ui/components/ui/input';
 import { Label } from '@colanode/ui/components/ui/label';
+import { WikiPublicationNotice } from '@colanode/ui/components/wikis/wiki-publication-notice';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import { useDebouncedValue } from '@colanode/ui/hooks/use-debounced-value';
 import { useMutation } from '@colanode/ui/hooks/use-mutation';
@@ -264,6 +265,8 @@ export const WikiPublication = ({ wiki, role }: WikiPublicationProps) => {
           </p>
         </div>
       )}
+
+      {mode !== 'private' && <WikiPublicationNotice wikiId={wiki.id} />}
 
       <div className="flex justify-end">
         <Button
