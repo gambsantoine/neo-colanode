@@ -32,10 +32,13 @@
 - **Diagrammes PlantUML** : commande `/plantuml` dans l'éditeur et outil PlantUML dédié (menu *Outils*). Le rendu est fait **100 % en local** (`@plantuml/core` + Graphviz WASM), sans appel réseau.
 - **draw.io local** : éditeur draw.io embarqué dans l'application (menu *Outils*), sans `embed.diagrams.net` ni autre service externe. Il est téléchargé une seule fois au build avec `npm run fetch:drawio -w @colanode/scripts` (version et empreinte figées dans `scripts/src/drawio/index.ts`).
 - **Titre et catégories des pages** : titre modifiable en haut de la page et catégories (`#tag`) propres au workspace, utilisables dans la recherche (Ctrl/Cmd+K) : `#infra sauvegarde`.
+- **Volet d'informations des pages** : un bouton ouvre à droite les tags, l'emplacement, l'auteur, les dates, le nombre de mots, le temps de lecture et les sous-pages ; les dates de création et de modification s'affichent sous le titre.
+- **Wikis publiables** : type d'espace dédié à la documentation (pages, catégories, dossiers, bases, sans canaux), publiable par **lien d'accès secret** ou à une **adresse publique lisible** (`/wiki/doc-produit/guides/premiers-pas`). Le serveur rend les pages en HTML façon documentation technique : navigation, sommaire, recherche, images, bases en lecture seule, diagrammes PlantUML ; les anciennes adresses redirigent après un renommage.
+- **Pseudo** : choisi à l'inscription (généré pour les comptes existants), il remplace le vrai nom sur les pages publiques.
 - **Export PDF / impression** : export d'une page en PDF (A4) sur desktop, impression via une iframe isolée sur le web ; les diagrammes PlantUML sont inclus.
 - **API publique REST** (`/api`) : workspaces, espaces, nœuds et documents, avec pagination et versioning, authentifiée par **clé API** (`Authorization: Bearer …`).
 - **Clés API** : création, liste et révocation au niveau du compte ou du workspace, depuis l'interface.
-- **Serveur MCP** (`apps/mcp`) : permet à un assistant IA (Claude, etc.) de lister les workspaces/espaces/nœuds, lire un document, créer une page, écrire du Markdown dans un document et renommer un nœud.
+- **Serveur MCP** (`apps/mcp`) : permet à un assistant IA (Claude, etc.) de lister les workspaces/espaces/wikis/nœuds, lire un document, créer une page, écrire du Markdown dans un document, renommer un nœud et connaître l'adresse d'un wiki publié.
 
 ![Aperçu de Colanode](assets/images/colanode-desktop-preview.gif)
 
@@ -43,6 +46,7 @@
 
 | Date | Changement |
 | --- | --- |
+| 17/11/2026 | Wikis publiables (lien d'accès ou adresse publique), pseudo des comptes, volet d'informations des pages, wikis dans l'API et le serveur MCP 1.1.0 |
 | 19/10/2026 | Bloc `/plantuml` dans l'éditeur, outil PlantUML, rendu local ; export PDF incluant les diagrammes |
 | 19/10/2026 | Serveur MCP : écriture de documents en Markdown, impression/export PDF |
 | 28/09/2026 | Correctifs sur l'API et le réordonnancement de la barre latérale |
@@ -62,6 +66,8 @@
 | ✅ | Export PDF / impression | |
 | ✅ | API publique + clés API | |
 | ✅ | Serveur MCP | |
+| ✅ | Wikis publiables (lien d'accès, adresse publique) | Migrations serveur 00034 et 00035 |
+| ✅ | Pseudo des comptes et volet d'informations des pages | |
 | ⏳ | Recherche globale dans le workspace (Ctrl/Cmd+K, index FTS5 local) | |
 | ⏳ | Centre de notifications (mentions) + notifications desktop | |
 | ⏳ | Badge non-lu par espace dans le rail | |
@@ -101,6 +107,10 @@ Le dossier [`hosting/`](hosting/) contient le fichier Docker Compose et les conf
   3. gardez les secrets en variables d'environnement, résolues à l'exécution via `env://`.
 
 Les variables d'environnement ne surchargent pas les champs de configuration classiques : seules les valeurs marquées `env://` sont lues depuis l'environnement.
+
+#### Wikis publics
+
+Les wikis publiés sont servis par le serveur API, sous `/wiki/…` (et `/s/…` pour les liens d'accès) : aucune règle de proxy supplémentaire n'est nécessaire. En production, renseignez `publicUrl` dans `config.json` (ex. `"publicUrl": "https://api.exemple.fr"`) : l'adresse canonique, le sitemap et les liens d'accès ne dépendent alors plus de l'en-tête `Host` de la requête.
 
 ### Lancer en local
 
@@ -182,6 +192,8 @@ claude mcp add colanode \
 }
 ```
 
+La version 1.1.0 (wikis, outil `get_wiki_publication`) sera téléchargeable une fois le tag `mcp-v1.1.0` poussé ; remplacez alors `1.0.1` par `1.1.0` dans les commandes ci-dessus.
+
 Pour publier une nouvelle version, changez `version` dans `apps/mcp/package.json`, puis poussez un tag `mcp-vX.Y.Z` : le workflow `mcp-release.yml` construit le paquet et crée la release GitHub.
 
 ## Tests
@@ -190,7 +202,7 @@ Les tests utilisent Vitest. Lancez `npm run test` dans le dossier concerné :
 
 | Dossier | Remarque |
 | --- | --- |
-| `apps/server` | Testcontainers (Postgres, Redis) : Docker doit tourner. Voir [`apps/server/README.md`](apps/server/README.md). |
+| `apps/server` | Testcontainers (Postgres, Redis) : Docker doit tourner. Voir [`apps/server/README.md`](apps/server/README.md). Sans Docker : `npm run test:unit` (tests unitaires, base et Redis simulés). |
 | `apps/web` | |
 | `packages/api` | |
 | `apps/mcp` | Conversion Markdown ⇄ document |
