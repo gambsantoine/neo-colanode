@@ -33,6 +33,11 @@ interface AccountTable {
   id: ColumnType<string, string, never>;
   server: ColumnType<string, string, never>;
   name: ColumnType<string, string, string>;
+  username: ColumnType<
+    string | null,
+    string | null | undefined,
+    string | null
+  >;
   email: ColumnType<string, string, never>;
   avatar: ColumnType<string | null, string | null, string | null>;
   token: ColumnType<string, string, string>;

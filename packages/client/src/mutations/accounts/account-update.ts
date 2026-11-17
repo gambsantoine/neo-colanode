@@ -2,6 +2,7 @@ export type AccountUpdateMutationInput = {
   type: 'account.update';
   id: string;
   name: string;
+  username?: string;
   avatar: string | null | undefined;
 };
 

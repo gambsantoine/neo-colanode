@@ -34,6 +34,7 @@ export class AccountUpdateMutationHandler
     try {
       const body: AccountUpdateInput = {
         name: input.name,
+        username: input.username,
         avatar: input.avatar,
       };
 
@@ -47,6 +48,7 @@ export class AccountUpdateMutationHandler
         .updateTable('accounts')
         .set({
           name: response.name,
+          username: response.username ?? null,
           avatar: response.avatar,
           updated_at: new Date().toISOString(),
         })
