@@ -234,6 +234,9 @@ export const isPublicFile = (wiki: PublishedWiki, fileId: string) => {
   return attributes.status === FileStatus.Ready ? file : null;
 };
 
+// Names shown on public pages: the username comes first, so that real names
+// stay inside the workspace. Older accounts without one fall back to the
+// display name.
 const fetchUserNames = async (
   workspaceId: string,
   userIds: string[]
@@ -244,12 +247,30 @@ const fetchUserNames = async (
 
   const users = await database
     .selectFrom('users')
-    .select(['id', 'name', 'custom_name'])
+    .select(['id', 'account_id', 'name', 'custom_name'])
     .where('workspace_id', '=', workspaceId)
     .where('id', 'in', userIds)
     .execute();
 
-  return new Map(users.map((user) => [user.id, user.custom_name || user.name]));
+  const accountIds = [...new Set(users.map((user) => user.account_id))];
+  const accounts =
+    accountIds.length > 0
+      ? await database
+          .selectFrom('accounts')
+          .select(['id', 'username'])
+          .where('id', 'in', accountIds)
+          .execute()
+      : [];
+  const usernames = new Map(
+    accounts.map((account) => [account.id, account.username])
+  );
+
+  return new Map(
+    users.map((user) => [
+      user.id,
+      usernames.get(user.account_id) || user.custom_name || user.name,
+    ])
+  );
 };
 
 const collectMentionTargets = (content: RichTextContent | null): string[] => {

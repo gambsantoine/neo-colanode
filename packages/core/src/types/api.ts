@@ -55,6 +55,7 @@ export enum ApiErrorCode {
   RootNotFound = 'root_not_found',
   ApiKeyNotFound = 'api_key_not_found',
   ApiKeyNoAccess = 'api_key_no_access',
+  UsernameTaken = 'username_taken',
   WikiNotFound = 'wiki_not_found',
   WikiNoAccess = 'wiki_no_access',
   WikiSlugInvalid = 'wiki_slug_invalid',

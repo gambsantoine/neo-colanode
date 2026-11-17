@@ -9,6 +9,7 @@ import {
 } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
 import { eventBus } from '@colanode/server/lib/event-bus';
+import { isUsernameTaken } from '@colanode/server/lib/usernames';
 
 export const accountUpdateRoute: FastifyPluginCallbackZod = (
   instance,
@@ -43,13 +44,27 @@ export const accountUpdateRoute: FastifyPluginCallbackZod = (
         });
       }
 
+      const username = input.username ?? account.username;
+      const usernameChanged = username !== account.username;
+      if (
+        usernameChanged &&
+        username &&
+        (await isUsernameTaken(username, account.id))
+      ) {
+        return reply.code(400).send({
+          code: ApiErrorCode.UsernameTaken,
+          message: 'This username is already taken. Choose another one.',
+        });
+      }
+
       const nameChanged = account.name !== input.name;
       const avatarChanged = account.avatar !== input.avatar;
 
-      if (!nameChanged && !avatarChanged) {
+      if (!nameChanged && !avatarChanged && !usernameChanged) {
         const output: AccountUpdateOutput = {
           id: account.id,
           name: input.name,
+          username,
           avatar: input.avatar,
         };
 
@@ -64,6 +79,7 @@ export const accountUpdateRoute: FastifyPluginCallbackZod = (
             .returningAll()
             .set({
               name: input.name,
+              username,
               avatar: input.avatar,
               updated_at: new Date(),
             })
@@ -115,6 +131,7 @@ export const accountUpdateRoute: FastifyPluginCallbackZod = (
       const output: AccountUpdateOutput = {
         id: account.id,
         name: input.name,
+        username,
         avatar: input.avatar,
       };
 

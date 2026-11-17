@@ -22,6 +22,7 @@ import { AccountAttributes } from '@colanode/server/types/accounts';
 interface AccountTable {
   id: ColumnType<string, string, never>;
   name: ColumnType<string, string, string>;
+  username: ColumnType<string | null, string | null | undefined, string | null>;
   email: ColumnType<string, string, never>;
   avatar: ColumnType<string | null, string | null, string | null>;
   password: ColumnType<string | null, string | null, string | null>;

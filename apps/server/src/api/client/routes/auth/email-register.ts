@@ -19,6 +19,10 @@ import {
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
 import { isAuthEmailRateLimited } from '@colanode/server/lib/rate-limits';
+import {
+  generateUniqueUsername,
+  isUsernameTaken,
+} from '@colanode/server/lib/usernames';
 
 export const emailRegisterRoute: FastifyPluginCallbackZod = (
   instance,
@@ -77,6 +81,23 @@ export const emailRegisterRoute: FastifyPluginCallbackZod = (
         }
       }
 
+      let username: string;
+      if (input.username) {
+        if (
+          await isUsernameTaken(input.username, existingAccount?.id ?? null)
+        ) {
+          return reply.code(400).send({
+            code: ApiErrorCode.UsernameTaken,
+            message: 'This username is already taken. Choose another one.',
+          });
+        }
+        username = input.username;
+      } else {
+        username =
+          existingAccount?.username ??
+          (await generateUniqueUsername(input.name || email));
+      }
+
       const password = await generatePasswordHash(input.password);
 
       let account: SelectAccount | null | undefined = null;
@@ -99,6 +120,7 @@ export const emailRegisterRoute: FastifyPluginCallbackZod = (
           .set({
             password: password,
             name: input.name,
+            username,
             updated_at: new Date(),
             status: status,
           })
@@ -111,6 +133,7 @@ export const emailRegisterRoute: FastifyPluginCallbackZod = (
           .values({
             id: generateId(IdType.Account),
             name: input.name,
+            username,
             email: email,
             password: password,
             status: status,

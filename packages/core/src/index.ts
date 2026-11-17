@@ -32,6 +32,7 @@ export * from './types/mutations';
 export * from './synchronizers';
 export * from './lib/nodes';
 export * from './lib/slugs';
+export * from './lib/usernames';
 export * from './lib/tags';
 export * from './lib/texts';
 export * from './lib/permissions';

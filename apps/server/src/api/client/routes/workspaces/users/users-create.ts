@@ -16,6 +16,7 @@ import {
 import { database } from '@colanode/server/data/database';
 import { SelectAccount } from '@colanode/server/data/schema';
 import { eventBus } from '@colanode/server/lib/event-bus';
+import { generateUniqueUsername } from '@colanode/server/lib/usernames';
 import { getNameFromEmail } from '@colanode/server/lib/utils';
 import { jobService } from '@colanode/server/services/job-service';
 
@@ -186,6 +187,7 @@ const getOrCreateAccount = async (
     .values({
       id: generateId(IdType.Account),
       name: getNameFromEmail(email),
+      username: await generateUniqueUsername(email),
       email: email,
       avatar: null,
       attributes: null,

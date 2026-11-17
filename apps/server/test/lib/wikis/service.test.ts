@@ -29,6 +29,7 @@ import {
   resetDatabase,
   tables,
   text,
+  ADMIN_ID,
   WIKI_ID,
   WORKSPACE_ID,
 } from '../../api/wikis/helpers';
@@ -316,6 +317,18 @@ describe('renderWikiNodeContent', () => {
       `<ul class="children"><li><a href="${BASE}/category">Sans titre</a></li></ul>` +
         `<h2>Fichiers</h2><ul class="children files"><li><a href="${BASE}/_files/f/a.txt" download>a.txt</a></li></ul>`
     );
+  });
+
+  it('shows usernames before real names on public pages', async () => {
+    tables.users = tables.users!.map((user) => ({
+      ...user,
+      account_id: `acc-${user.id}`,
+    }));
+    tables.accounts = [{ id: `acc-${ADMIN_ID}`, username: 'ada_l' }];
+
+    const content = await renderWikiNodeContent(await load(), 'page-install');
+    expect(content.html).toContain('@ada_l');
+    expect(content.html).not.toContain('Ada &lt;Admin&gt;');
   });
 
   it('renders a page with mentions, files, links, database and subpages', async () => {

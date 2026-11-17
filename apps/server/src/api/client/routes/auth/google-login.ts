@@ -21,6 +21,7 @@ import {
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
 import { storage } from '@colanode/server/lib/storage';
+import { generateUniqueUsername } from '@colanode/server/lib/usernames';
 import { AccountAttributes } from '@colanode/server/types/accounts';
 
 const GoogleUserInfoUrl = 'https://www.googleapis.com/oauth2/v1/userinfo';
@@ -293,6 +294,9 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
         .values({
           id: generateId(IdType.Account),
           name: googleUser.name,
+          username: await generateUniqueUsername(
+            googleUser.name || googleUser.email
+          ),
           email: googleUser.email,
           avatar,
           status,
