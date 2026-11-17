@@ -410,9 +410,10 @@ describe('renderWikiPage', () => {
     const pagerOf = (html: string) =>
       section(html, '<nav class="pager"', '</nav>');
 
-    it('links the first page from the home page', () => {
+    it('continues after the home page shown at the root', () => {
+      // The root shows Intro (first page): "next" is the page after it.
       expect(pagerOf(renderWikiPage(view(sampleWiki())))).toBe(
-        '<nav class="pager" aria-label="Pages"><a class="next" href="/wiki/docs/intro"><small>Suivant</small>Intro</a></nav>'
+        '<nav class="pager" aria-label="Pages"><a class="next" href="/wiki/docs/intro/sub"><small>Suivant</small>Sub</a></nav>'
       );
     });
 
@@ -463,7 +464,7 @@ describe('renderWikiPage', () => {
 
     it('skips neighbours without a published path', () => {
       const wiki = sampleWiki();
-      wiki.tree.byId.delete('intro');
+      wiki.tree.byId.delete('intro-child');
       expect(renderWikiPage(view(wiki))).not.toContain('class="pager"');
     });
   });

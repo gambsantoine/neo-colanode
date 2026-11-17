@@ -1,6 +1,7 @@
+import { randomUUID } from 'crypto';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { generateId, IdType } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
 
 import { buildTestApp } from '../helpers/app';
@@ -17,7 +18,7 @@ afterAll(async () => {
 });
 
 const uniqueEmail = () =>
-  `user-${generateId(IdType.Account).slice(14, 26)}@example.com`;
+  `user-${randomUUID().replace(/-/g, '').slice(0, 10)}@example.com`;
 
 const register = (payload: Record<string, unknown>) =>
   app.inject({
@@ -38,7 +39,7 @@ const usernameOf = async (email: string) => {
 describe('account usernames (real database)', () => {
   it('stores the chosen username, normalized', async () => {
     const email = uniqueEmail();
-    const username = `Ada.${generateId(IdType.Account).slice(16, 24)}`;
+    const username = `Ada.${randomUUID().replace(/-/g, '').slice(0, 10)}`;
     const response = await register({ name: 'Ada', email, username });
 
     expect(response.statusCode).toBe(200);
@@ -47,7 +48,7 @@ describe('account usernames (real database)', () => {
   });
 
   it('refuses a username already taken', async () => {
-    const username = `taken_${generateId(IdType.Account).slice(16, 24)}`;
+    const username = `taken_${randomUUID().replace(/-/g, '').slice(0, 10)}`;
     await register({ name: 'First', email: uniqueEmail(), username });
 
     const second = await register({
@@ -74,5 +75,18 @@ describe('account usernames (real database)', () => {
 
     expect(response.statusCode).toBe(200);
     expect(await usernameOf(email)).toMatch(/^grace_hopper\d*$/);
+  });
+
+  it('never fails with 500 when two people take a username at once', async () => {
+    const username = `race_${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+    const responses = await Promise.all(
+      [0, 1, 2].map((index) =>
+        register({ name: `Racer ${index}`, email: uniqueEmail(), username })
+      )
+    );
+
+    const codes = responses.map((response) => response.statusCode).sort();
+    expect(codes.filter((code) => code === 200)).toHaveLength(1);
+    expect(codes.filter((code) => code === 400)).toHaveLength(2);
   });
 });

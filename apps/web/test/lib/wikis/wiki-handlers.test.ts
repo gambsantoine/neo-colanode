@@ -354,10 +354,10 @@ describe('client/handlers/mutations/wikis', () => {
           method: 'put',
           url: 'v1/workspaces/ws1/wikis/wiki1/publication',
           options: {
+            // No home page given: left out so the server keeps it.
             json: {
               slug: 'product-docs',
               access: 'public',
-              homeNodeId: null,
             },
           },
         },

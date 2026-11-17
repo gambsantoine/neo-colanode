@@ -61,6 +61,7 @@ export enum ApiErrorCode {
   WikiSlugInvalid = 'wiki_slug_invalid',
   WikiSlugTaken = 'wiki_slug_taken',
   WikiNotPublished = 'wiki_not_published',
+  WikiHomeInvalid = 'wiki_home_invalid',
   UnsupportedApiVersion = 'unsupported_api_version',
   SpaceNotFound = 'space_not_found',
   NodeNotFound = 'node_not_found',

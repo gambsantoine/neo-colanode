@@ -1,6 +1,8 @@
+import { randomUUID } from 'crypto';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { generateId, IdType, WorkspaceStatus } from '@colanode/core';
+import { WorkspaceStatus } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
 import { updateNode } from '@colanode/server/lib/nodes';
 import { deleteWikiPublication } from '@colanode/server/lib/wikis/cleanup';
@@ -59,8 +61,8 @@ const setDocument = async (
     .execute();
 };
 
-// The start of an id is its timestamp: take random characters instead.
-const uniqueSuffix = () => generateId(IdType.Wiki).slice(14, 24);
+// Random, so that two calls in the same millisecond never collide.
+const uniqueSuffix = () => randomUUID().replace(/-/g, '').slice(0, 10);
 
 const setup = async (slugSuffix: string) => {
   const account = await createAccount();
@@ -394,5 +396,99 @@ describe('wiki publication (real database)', () => {
       .where('slug', '=', ctx.slug)
       .executeTakeFirst();
     expect(publication).toBeUndefined();
+  });
+
+  it('keeps redirects working after the address changes or a republication', async () => {
+    const ctx = await setup(uniqueSuffix());
+    const publish = (slug: string) =>
+      app.inject({
+        method: 'PUT',
+        url: `${ctx.base}/publication`,
+        headers: ctx.headers,
+        payload: { slug, access: 'public' },
+      });
+    const rename = (name: string) =>
+      updateNode({
+        nodeId: ctx.pageId,
+        userId: ctx.user.id,
+        workspaceId: ctx.workspace.id,
+        updater(attributes) {
+          if (attributes.type !== 'page') {
+            throw new Error('Not a page');
+          }
+          attributes.name = name;
+          return attributes;
+        },
+      });
+
+    await publish(ctx.slug);
+    await app.inject({ method: 'GET', url: `/wiki/${ctx.slug}` });
+
+    const newSlug = `${ctx.slug}-v2`;
+    await publish(newSlug);
+    await app.inject({ method: 'GET', url: `/wiki/${newSlug}` });
+    await rename('Démarrage');
+
+    const afterSlugChange = await app.inject({
+      method: 'GET',
+      url: `/wiki/${newSlug}/guides/premiers-pas`,
+    });
+    expect(afterSlugChange.statusCode).toBe(301);
+    expect(afterSlugChange.headers.location).toBe(
+      `/wiki/${newSlug}/guides/demarrage`
+    );
+
+    // Unpublish then publish again at the same address.
+    await app.inject({
+      method: 'DELETE',
+      url: `${ctx.base}/publication`,
+      headers: ctx.headers,
+    });
+    await publish(newSlug);
+    await app.inject({ method: 'GET', url: `/wiki/${newSlug}` });
+    await rename('Mise en route');
+
+    const afterRepublish = await app.inject({
+      method: 'GET',
+      url: `/wiki/${newSlug}/guides/demarrage`,
+    });
+    expect(afterRepublish.statusCode).toBe(301);
+    expect(afterRepublish.headers.location).toBe(
+      `/wiki/${newSlug}/guides/mise-en-route`
+    );
+  });
+
+  it('starts a new access link after the wiki was public', async () => {
+    const ctx = await setup(uniqueSuffix());
+    const publish = (access: 'link' | 'public') =>
+      app.inject({
+        method: 'PUT',
+        url: `${ctx.base}/publication`,
+        headers: ctx.headers,
+        payload: { slug: ctx.slug, access },
+      });
+
+    await publish('link');
+    const link = await app.inject({
+      method: 'POST',
+      url: `${ctx.base}/publication/link`,
+      headers: ctx.headers,
+    });
+    const open = await app.inject({
+      method: 'GET',
+      url: new URL(link.json().linkUrl).pathname,
+    });
+    const cookie = String(open.headers['set-cookie']).split(';')[0]!;
+
+    await publish('public');
+    const back = await publish('link');
+    expect(back.json().hasLink).toBe(false);
+
+    const oldReader = await app.inject({
+      method: 'GET',
+      url: `/wiki/${ctx.slug}`,
+      headers: { cookie },
+    });
+    expect(oldReader.statusCode).toBe(404);
   });
 });

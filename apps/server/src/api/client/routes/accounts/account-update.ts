@@ -9,7 +9,10 @@ import {
 } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
 import { eventBus } from '@colanode/server/lib/event-bus';
-import { isUsernameTaken } from '@colanode/server/lib/usernames';
+import {
+  isUsernameConflict,
+  isUsernameTaken,
+} from '@colanode/server/lib/usernames';
 
 export const accountUpdateRoute: FastifyPluginCallbackZod = (
   instance,
@@ -71,9 +74,9 @@ export const accountUpdateRoute: FastifyPluginCallbackZod = (
         return output;
       }
 
-      const { updatedAccount, updatedUsers } = await database
-        .transaction()
-        .execute(async (tx) => {
+      let result;
+      try {
+        result = await database.transaction().execute(async (tx) => {
           const updatedAccount = await tx
             .updateTable('accounts')
             .returningAll()
@@ -104,6 +107,19 @@ export const accountUpdateRoute: FastifyPluginCallbackZod = (
 
           return { updatedAccount, updatedUsers };
         });
+      } catch (error) {
+        // Taken by another request between the check and the write.
+        if (isUsernameConflict(error)) {
+          return reply.code(400).send({
+            code: ApiErrorCode.UsernameTaken,
+            message: 'This username is already taken. Choose another one.',
+          });
+        }
+
+        throw error;
+      }
+
+      const { updatedAccount, updatedUsers } = result;
 
       if (!updatedAccount) {
         return reply.code(404).send({

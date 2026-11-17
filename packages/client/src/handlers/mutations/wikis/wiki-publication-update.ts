@@ -24,7 +24,10 @@ export class WikiPublicationUpdateMutationHandler
             json: {
               slug: input.slug,
               access: input.access,
-              homeNodeId: input.homeNodeId ?? null,
+              // Left out when unknown: the server keeps the chosen home.
+              ...(input.homeNodeId !== undefined
+                ? { homeNodeId: input.homeNodeId }
+                : {}),
             },
           }
         )

@@ -8,7 +8,7 @@ import { FastifyPluginCallback, FastifyReply, FastifyRequest } from 'fastify';
 import { isValidWikiSlug } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
 import { SelectWikiPublication } from '@colanode/server/data/schema';
-import { config } from '@colanode/server/lib/config';
+import { generateOrigin } from '@colanode/server/lib/fastify';
 import { createLogger } from '@colanode/server/lib/logger';
 import {
   isPublicIpRateLimited,
@@ -22,7 +22,6 @@ import {
 } from '@colanode/server/lib/wikis/layout';
 import { normalizeWikiPath } from '@colanode/server/lib/wikis/paths';
 import {
-  buildServerBaseUrl,
   buildWikiPathPrefix,
   parseWikiLinkToken,
   readCookie,
@@ -31,14 +30,14 @@ import {
   wikiAccessCookiePath,
 } from '@colanode/server/lib/wikis/publications';
 import {
+  getPublicationBySlug,
   getReadableWiki,
-  getWikiNodeContent,
+  getWikiNodeRender,
   getWikiTexts,
   ReadableWiki,
 } from '@colanode/server/lib/wikis/readable';
 import { INLINE_IMAGE_TYPES } from '@colanode/server/lib/wikis/render-blocks';
 import {
-  fetchWikiPublicationBySlug,
   isPublicFile,
   resolveWikiPath,
   searchWiki,
@@ -105,18 +104,19 @@ const hasReaderAccess = (
 // that private wikis are not revealed).
 const loadReadableWiki = async (
   request: FastifyRequest,
-  slug: string
+  slug: string,
+  reuse = false
 ): Promise<ReadableWiki | null> => {
   if (!isValidWikiSlug(slug)) {
     return null;
   }
 
-  const publication = await fetchWikiPublicationBySlug(slug);
+  const publication = await getPublicationBySlug(slug, reuse);
   if (!publication || !hasReaderAccess(request, publication)) {
     return null;
   }
 
-  return getReadableWiki(publication, buildWikiPathPrefix(slug));
+  return getReadableWiki(publication, buildWikiPathPrefix(slug), reuse);
 };
 
 const isRateLimitedSafely = async (
@@ -199,7 +199,7 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
   instance.get<{ Params: { slug: string; fileId: string; name: string } }>(
     '/wiki/:slug/_files/:fileId/:name',
     async (request, reply) => {
-      const entry = await loadReadableWiki(request, request.params.slug);
+      const entry = await loadReadableWiki(request, request.params.slug, true);
       const wiki = entry?.wiki ?? null;
       const file = wiki ? isPublicFile(wiki, request.params.fileId) : null;
       if (!wiki || !file) {
@@ -321,10 +321,7 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
         return sendNotFound(reply);
       }
 
-      const origin = buildServerBaseUrl(request).replace(
-        config.pathPrefix ? `/${config.pathPrefix}` : '',
-        ''
-      );
+      const origin = generateOrigin(request);
       const urls = [...wiki.tree.paths.keys()]
         .map((id) => wikiHref(wiki, id))
         .filter((href): href is string => href !== null)
@@ -362,8 +359,11 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
       return reply.redirect(target, 301);
     }
 
-    // Unchanged wiki: the browser keeps its copy (no rendering at all).
-    const etag = `W/"${entry.version}-${resolution.nodeId}"`;
+    // Unchanged page: the browser keeps its copy. The render time is part
+    // of the tag so that refreshed user names reach returning readers.
+    const render = await getWikiNodeRender(entry, resolution.nodeId);
+    const content = render.content;
+    const etag = `W/"${entry.version}-${resolution.nodeId}-${render.at}"`;
     reply.header('ETag', etag);
     if (request.headers['if-none-match'] === etag) {
       reply.header(
@@ -373,13 +373,9 @@ export const wikiPublicRoutes: FastifyPluginCallback = (instance, _, done) => {
       return reply.code(304).send();
     }
 
-    const content = await getWikiNodeContent(entry, resolution.nodeId);
     const indexable = wiki.publication.access === 'public';
     const href = wikiHref(wiki, resolution.nodeId);
-    const origin = buildServerBaseUrl(request).replace(
-      config.pathPrefix ? `/${config.pathPrefix}` : '',
-      ''
-    );
+    const origin = generateOrigin(request);
 
     const nonce = randomBytes(16).toString('base64');
     setPageHeaders(reply, nonce, indexable);

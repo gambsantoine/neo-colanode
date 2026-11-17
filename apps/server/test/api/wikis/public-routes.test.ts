@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { wikiPublicRoutes } from '@colanode/server/api/public/wiki-routes';
 import { storage } from '@colanode/server/lib/storage';
 import { generateWikiLinkToken } from '@colanode/server/lib/wikis/publications';
+import { clearReadableWikis } from '@colanode/server/lib/wikis/readable';
 
 import {
   buildDocuments,
@@ -91,6 +92,7 @@ const setupLinkMode = () => {
 };
 
 beforeEach(async () => {
+  clearReadableWikis();
   redisStore.clear();
   download.mockReset();
   setup();

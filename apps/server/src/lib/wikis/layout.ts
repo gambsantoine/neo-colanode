@@ -1,6 +1,10 @@
 import { escapeHtml } from '@colanode/server/lib/wikis/html';
 import { WikiHeading } from '@colanode/server/lib/wikis/render-blocks';
-import { PublishedWiki, wikiHref } from '@colanode/server/lib/wikis/service';
+import {
+  findWikiHome,
+  PublishedWiki,
+  wikiHref,
+} from '@colanode/server/lib/wikis/service';
 import { wikiPageTemplate } from '@colanode/server/templates';
 
 const NAV_TYPES = new Set(['page', 'category', 'folder', 'database']);
@@ -128,12 +132,15 @@ const renderToc = (headings: WikiHeading[]): string => {
 
 const renderPager = (wiki: PublishedWiki, nodeId: string): string => {
   const order = flattenWikiNav(wiki);
-  const index = order.indexOf(nodeId);
-  if (index === -1 && nodeId !== wiki.wiki.id) {
+  const isRoot = nodeId === wiki.wiki.id;
+  // The root shows the home page: the pager continues after it.
+  const homeId = isRoot ? findWikiHome(wiki) : null;
+  const index = order.indexOf(homeId ?? nodeId);
+  if (index === -1 && !isRoot) {
     return '';
   }
 
-  const previousId = index > 0 ? order[index - 1] : null;
+  const previousId = !isRoot && index > 0 ? order[index - 1] : null;
   const nextId = index === -1 ? order[0] : order[index + 1];
 
   const link = (

@@ -28,6 +28,10 @@ export class LruCache<K, V> {
     this.items.delete(key);
   }
 
+  public clear(): void {
+    this.items.clear();
+  }
+
   public get size(): number {
     return this.items.size;
   }

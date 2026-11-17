@@ -1,3 +1,5 @@
+import { randomUUID } from 'crypto';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { generateId, IdType } from '@colanode/core';
@@ -90,7 +92,7 @@ describe('wikis in the public API (real database)', () => {
     expect(unpublished.statusCode).toBe(404);
     expect(unpublished.json().code).toBe('wiki_not_published');
 
-    const slug = `api-${generateId(IdType.Wiki).slice(14, 24)}`;
+    const slug = `api-${randomUUID().replace(/-/g, '').slice(0, 10)}`;
     await database
       .insertInto('wiki_publications')
       .values({

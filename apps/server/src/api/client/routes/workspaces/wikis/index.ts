@@ -15,7 +15,14 @@ import {
   wikiSlugAvailabilityOutputSchema,
 } from '@colanode/core';
 import { database } from '@colanode/server/data/database';
+import { SelectWikiPublication } from '@colanode/server/data/schema';
 import { fetchNodeTree, mapNode } from '@colanode/server/lib/nodes';
+import { isUniqueViolation } from '@colanode/server/lib/postgres-errors';
+import {
+  deleteWikiPublication,
+  deleteWikiRoutes,
+  forgetWikiCaches,
+} from '@colanode/server/lib/wikis/cleanup';
 import {
   buildServerBaseUrl,
   generateWikiLinkToken,
@@ -56,6 +63,18 @@ const checkWikiAdmin = async (
   }
 
   return true;
+};
+
+const isWikiPage = async (wikiId: string, nodeId: string) => {
+  const node = await database
+    .selectFrom('nodes')
+    .select(['id'])
+    .where('id', '=', nodeId)
+    .where('root_id', '=', wikiId)
+    .where('type', '=', 'page')
+    .executeTakeFirst();
+
+  return node !== undefined;
 };
 
 const fetchPublication = (wikiId: string) =>
@@ -157,54 +176,86 @@ export const wikiRoutes: FastifyPluginCallbackZod = (instance, _, done) => {
       }
 
       const existing = await fetchPublication(wikiId);
-      const now = new Date();
-      const userId = request.workspace.user.id;
-      const homeNodeId = request.body.homeNodeId ?? null;
 
-      try {
-        const publication = existing
-          ? await database
-              .updateTable('wiki_publications')
-              .set({
-                slug,
-                access: request.body.access,
-                home_node_id: homeNodeId,
-                updated_at: now,
-                updated_by: userId,
-              })
-              .where('wiki_id', '=', wikiId)
-              .returningAll()
-              .executeTakeFirstOrThrow()
-          : await database
-              .insertInto('wiki_publications')
-              .values({
-                wiki_id: wikiId,
-                workspace_id: request.workspace.id,
-                slug,
-                access: request.body.access,
-                home_node_id: homeNodeId,
-                created_at: now,
-                created_by: userId,
-              })
-              .returningAll()
-              .executeTakeFirstOrThrow();
+      // The home page is kept when the request does not mention it.
+      const homeNodeId =
+        request.body.homeNodeId === undefined
+          ? (existing?.home_node_id ?? null)
+          : request.body.homeNodeId;
 
-        // Old addresses of another slug must not redirect anymore.
-        if (existing && existing.slug !== slug) {
-          await database
-            .deleteFrom('wiki_routes')
-            .where('wiki_id', '=', wikiId)
-            .execute();
-        }
-
-        return mapWikiPublication(publication, buildServerBaseUrl(request));
-      } catch {
-        // Unique violation when two wikis claim the slug at the same time.
-        return reply.code(409).send({
-          code: ApiErrorCode.WikiSlugTaken,
-          message: 'This address is already used by another wiki.',
+      // Only a newly chosen home is checked: a kept one that was deleted
+      // since must not block saving (the first page is shown instead).
+      if (
+        request.body.homeNodeId &&
+        !(await isWikiPage(wikiId, request.body.homeNodeId))
+      ) {
+        return reply.code(400).send({
+          code: ApiErrorCode.WikiHomeInvalid,
+          message: 'The home page must be a page of this wiki.',
         });
       }
+
+      const now = new Date();
+      const userId = request.workspace.user.id;
+      const access = request.body.access;
+      const slugChanged = existing !== undefined && existing.slug !== slug;
+
+      let publication: SelectWikiPublication;
+      try {
+        publication = await database.transaction().execute(async (trx) => {
+          const saved = existing
+            ? await trx
+                .updateTable('wiki_publications')
+                .set({
+                  slug,
+                  access,
+                  home_node_id: homeNodeId,
+                  // A public wiki needs no secret: going back to link mode
+                  // later starts with a new link, old readers are out.
+                  ...(access === 'public'
+                    ? { link_token_hash: null, link_token_salt: null }
+                    : {}),
+                  updated_at: now,
+                  updated_by: userId,
+                })
+                .where('wiki_id', '=', wikiId)
+                .returningAll()
+                .executeTakeFirstOrThrow()
+            : await trx
+                .insertInto('wiki_publications')
+                .values({
+                  wiki_id: wikiId,
+                  workspace_id: request.workspace.id,
+                  slug,
+                  access,
+                  home_node_id: homeNodeId,
+                  created_at: now,
+                  created_by: userId,
+                })
+                .returningAll()
+                .executeTakeFirstOrThrow();
+
+          // Old addresses of another slug must not redirect anymore.
+          if (slugChanged) {
+            await deleteWikiRoutes(wikiId, trx);
+          }
+
+          return saved;
+        });
+      } catch (error) {
+        // Two wikis claimed the same address at the same time.
+        if (isUniqueViolation(error, 'wiki_publications_slug_key')) {
+          return reply.code(409).send({
+            code: ApiErrorCode.WikiSlugTaken,
+            message: 'This address is already used by another wiki.',
+          });
+        }
+
+        throw error;
+      }
+
+      await forgetWikiCaches([wikiId]);
+      return mapWikiPublication(publication, buildServerBaseUrl(request));
     },
   });
 
@@ -225,16 +276,7 @@ export const wikiRoutes: FastifyPluginCallbackZod = (instance, _, done) => {
         return reply;
       }
 
-      await database.transaction().execute(async (trx) => {
-        await trx
-          .deleteFrom('wiki_routes')
-          .where('wiki_id', '=', wikiId)
-          .execute();
-        await trx
-          .deleteFrom('wiki_publications')
-          .where('wiki_id', '=', wikiId)
-          .execute();
-      });
+      await deleteWikiPublication(wikiId);
 
       return { success: true };
     },
@@ -278,6 +320,7 @@ export const wikiRoutes: FastifyPluginCallbackZod = (instance, _, done) => {
         .where('wiki_id', '=', wikiId)
         .execute();
 
+      await forgetWikiCaches([wikiId]);
       return { linkUrl: `${buildServerBaseUrl(request)}/s/${token}` };
     },
   });

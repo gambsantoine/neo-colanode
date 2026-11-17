@@ -177,6 +177,7 @@ export const fakeRedis = {
     return value;
   },
   expire: async () => 1,
+  del: async (key: string) => (redisStore.delete(key) ? 1 : 0),
 };
 
 // Fixtures ------------------------------------------------------------------

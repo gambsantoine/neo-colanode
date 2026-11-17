@@ -20,8 +20,9 @@ import {
 import { config } from '@colanode/server/lib/config';
 import { isAuthEmailRateLimited } from '@colanode/server/lib/rate-limits';
 import {
-  generateUniqueUsername,
+  isUsernameConflict,
   isUsernameTaken,
+  withGeneratedUsername,
 } from '@colanode/server/lib/usernames';
 
 export const emailRegisterRoute: FastifyPluginCallbackZod = (
@@ -81,66 +82,79 @@ export const emailRegisterRoute: FastifyPluginCallbackZod = (
         }
       }
 
-      let username: string;
-      if (input.username) {
-        if (
-          await isUsernameTaken(input.username, existingAccount?.id ?? null)
-        ) {
-          return reply.code(400).send({
-            code: ApiErrorCode.UsernameTaken,
-            message: 'This username is already taken. Choose another one.',
-          });
-        }
-        username = input.username;
-      } else {
-        username =
-          existingAccount?.username ??
-          (await generateUniqueUsername(input.name || email));
+      if (
+        input.username &&
+        (await isUsernameTaken(input.username, existingAccount?.id ?? null))
+      ) {
+        return reply.code(400).send({
+          code: ApiErrorCode.UsernameTaken,
+          message: 'This username is already taken. Choose another one.',
+        });
+      }
+
+      if (existingAccount && existingAccount.status !== AccountStatus.Pending) {
+        return reply.code(400).send({
+          code: ApiErrorCode.EmailAlreadyExists,
+          message: 'Email already exists. Login or use another email.',
+        });
       }
 
       const password = await generatePasswordHash(input.password);
-
-      let account: SelectAccount | null | undefined = null;
 
       const status =
         config.account.verificationType === 'email'
           ? AccountStatus.Unverified
           : AccountStatus.Active;
 
-      if (existingAccount) {
-        if (existingAccount.status !== AccountStatus.Pending) {
-          return reply.code(400).send({
-            code: ApiErrorCode.EmailAlreadyExists,
-            message: 'Email already exists. Login or use another email.',
-          });
-        }
+      const writeAccount = (username: string) =>
+        existingAccount
+          ? database
+              .updateTable('accounts')
+              .set({
+                password: password,
+                name: input.name,
+                username,
+                updated_at: new Date(),
+                status: status,
+              })
+              .where('id', '=', existingAccount.id)
+              .returningAll()
+              .executeTakeFirst()
+          : database
+              .insertInto('accounts')
+              .values({
+                id: generateId(IdType.Account),
+                name: input.name,
+                username,
+                email: email,
+                password: password,
+                status: status,
+                created_at: new Date(),
+              })
+              .returningAll()
+              .executeTakeFirst();
 
-        account = await database
-          .updateTable('accounts')
-          .set({
-            password: password,
-            name: input.name,
-            username,
-            updated_at: new Date(),
-            status: status,
-          })
-          .where('id', '=', existingAccount.id)
-          .returningAll()
-          .executeTakeFirst();
+      let account: SelectAccount | null | undefined = null;
+      const chosenUsername = input.username ?? existingAccount?.username;
+      if (chosenUsername) {
+        try {
+          account = await writeAccount(chosenUsername);
+        } catch (error) {
+          // Taken by another request between the check and the write.
+          if (isUsernameConflict(error)) {
+            return reply.code(400).send({
+              code: ApiErrorCode.UsernameTaken,
+              message: 'This username is already taken. Choose another one.',
+            });
+          }
+
+          throw error;
+        }
       } else {
-        account = await database
-          .insertInto('accounts')
-          .values({
-            id: generateId(IdType.Account),
-            name: input.name,
-            username,
-            email: email,
-            password: password,
-            status: status,
-            created_at: new Date(),
-          })
-          .returningAll()
-          .executeTakeFirst();
+        account = await withGeneratedUsername(
+          input.name || email,
+          writeAccount
+        );
       }
 
       if (!account) {

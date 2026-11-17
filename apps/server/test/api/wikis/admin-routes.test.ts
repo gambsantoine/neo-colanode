@@ -18,6 +18,7 @@ import {
   dbHooks,
   EDITOR_ID,
   node,
+  redisStore,
   resetDatabase,
   tables,
   WIKI_ID,
@@ -27,6 +28,11 @@ import {
 vi.mock('@colanode/server/data/database', async () => {
   const helpers = await import('./helpers');
   return { database: helpers.fakeDatabase };
+});
+
+vi.mock('@colanode/server/data/redis', async () => {
+  const helpers = await import('./helpers');
+  return { redis: helpers.fakeRedis };
 });
 
 vi.mock('@colanode/server/data/redis', async () => {
@@ -215,6 +221,9 @@ describe('GET /wikis/:wikiId/publication', () => {
 
 describe('PUT /wikis/:wikiId/publication', () => {
   it('publishes a wiki', async () => {
+    tables.nodes = [
+      { id: 'page-1', root_id: WIKI_ID, type: 'page', attributes: {} },
+    ];
     const response = await putPublication({
       slug: ' My-Docs ',
       access: 'link',
@@ -294,7 +303,10 @@ describe('PUT /wikis/:wikiId/publication', () => {
   it('answers 409 when the database refuses the slug', async () => {
     dbHooks.beforeExecute = (query) => {
       if (query.kind === 'insert') {
-        throw new Error('duplicate key value violates unique constraint');
+        throw Object.assign(new Error('duplicate key value'), {
+          code: '23505',
+          constraint: 'wiki_publications_slug_key',
+        });
       }
     };
     const response = await putPublication({ slug: 'docs', access: 'public' });
@@ -303,6 +315,69 @@ describe('PUT /wikis/:wikiId/publication', () => {
       code: ApiErrorCode.WikiSlugTaken,
       message: 'This address is already used by another wiki.',
     });
+  });
+});
+
+describe('PUT /wikis/:wikiId/publication (settings kept or reset)', () => {
+  it('does not turn other database errors into a taken address', async () => {
+    dbHooks.beforeExecute = (query) => {
+      if (query.kind === 'insert') {
+        throw new Error('connection lost');
+      }
+    };
+    const response = await putPublication({ slug: 'docs', access: 'public' });
+    expect(response.statusCode).toBe(500);
+  });
+
+  it('keeps the chosen home page when the request leaves it out', async () => {
+    tables.wiki_publications = [buildPublication({ home_node_id: 'page-1' })];
+
+    const response = await putPublication({ slug: 'docs', access: 'public' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().homeNodeId).toBe('page-1');
+  });
+
+  it('refuses a home page outside the wiki', async () => {
+    tables.nodes = [
+      { id: 'elsewhere', root_id: 'other-root', type: 'page', attributes: {} },
+    ];
+    const response = await putPublication({
+      slug: 'docs',
+      access: 'public',
+      homeNodeId: 'elsewhere',
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().code).toBe(ApiErrorCode.WikiHomeInvalid);
+  });
+
+  it('drops the access link when the wiki becomes public', async () => {
+    tables.wiki_publications = [
+      buildPublication({
+        access: 'link',
+        link_token_hash: 'hash',
+        link_token_salt: 'salt',
+      }),
+    ];
+
+    const response = await putPublication({ slug: 'docs', access: 'public' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().hasLink).toBe(false);
+    expect(tables.wiki_publications![0]).toMatchObject({
+      link_token_hash: null,
+      link_token_salt: null,
+    });
+  });
+
+  it('forgets the stored routes fingerprint when the slug changes', async () => {
+    tables.wiki_publications = [buildPublication()];
+    redisStore.set(`wiki:routes:${WIKI_ID}`, 'fingerprint');
+
+    await putPublication({ slug: 'handbook', access: 'public' });
+
+    expect(redisStore.has(`wiki:routes:${WIKI_ID}`)).toBe(false);
   });
 });
 

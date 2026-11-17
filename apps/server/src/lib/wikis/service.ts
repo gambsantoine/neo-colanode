@@ -113,12 +113,17 @@ export const loadPublishedWiki = async (
 
 // Stores the current paths of the wiki and keeps the old ones so that links
 // shared before a rename still redirect. Skipped when nothing changed.
+// Redis key holding the fingerprint of the routes last written for a wiki.
+// Delete it whenever `wiki_routes` is changed elsewhere, or the next sync
+// would wrongly skip writing the current routes.
+export const wikiRoutesCacheKey = (wikiId: string) => `wiki:routes:${wikiId}`;
+
 export const syncWikiRoutes = async (wiki: PublishedWiki): Promise<void> => {
   const entries = [...wiki.tree.paths.entries()].sort(([a], [b]) =>
     a < b ? -1 : 1
   );
   const fingerprint = sha256(JSON.stringify(entries));
-  const cacheKey = `wiki:routes:${wiki.wiki.id}`;
+  const cacheKey = wikiRoutesCacheKey(wiki.wiki.id);
 
   try {
     if ((await redis.get(cacheKey)) === fingerprint) {

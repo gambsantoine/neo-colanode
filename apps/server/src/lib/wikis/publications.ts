@@ -4,6 +4,7 @@ import { sha256 } from 'js-sha256';
 import { WikiPublicationOutput } from '@colanode/core';
 import { SelectWikiPublication } from '@colanode/server/data/schema';
 import { config } from '@colanode/server/lib/config';
+import { generateUrl } from '@colanode/server/lib/fastify';
 import { uuid } from '@colanode/server/lib/utils';
 
 const WIKI_LINK_TOKEN_PREFIX = 'cwl_';
@@ -67,19 +68,8 @@ export const verifyWikiLinkToken = (
 };
 
 // Base address of the server (scheme, host and path prefix).
-export const buildServerBaseUrl = (request: FastifyRequest): string => {
-  if (config.publicUrl) {
-    const prefix = config.pathPrefix ? `/${config.pathPrefix}` : '';
-    return `${config.publicUrl.replace(/\/+$/, '')}${prefix}`;
-  }
-
-  const port =
-    request.port && request.port != 80 && request.port != 443
-      ? `:${request.port}`
-      : '';
-  const prefix = config.pathPrefix ? `/${config.pathPrefix}` : '';
-  return `${request.protocol}://${request.hostname}${port}${prefix}`;
-};
+export const buildServerBaseUrl = (request: FastifyRequest): string =>
+  generateUrl(request, '');
 
 export const buildWikiPathPrefix = (slug: string): string => {
   const prefix = config.pathPrefix ? `/${config.pathPrefix}` : '';
