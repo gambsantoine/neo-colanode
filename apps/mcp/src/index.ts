@@ -43,7 +43,7 @@ const api = new ColanodeApi(serverUrl, apiKey);
 
 const server = new McpServer({
   name: 'colanode',
-  version: '1.0.1',
+  version: '1.1.0',
 });
 
 const text = (value: string) => ({
@@ -82,7 +82,7 @@ const pageArgs = {
 
 const locationArgs = {
   workspaceId: z.string().describe('Workspace id (see list_workspaces)'),
-  spaceId: z.string().describe('Space id (see list_spaces)'),
+  spaceId: z.string().describe('Space or wiki id (see list_spaces)'),
 };
 
 server.registerTool(
@@ -99,7 +99,8 @@ server.registerTool(
 server.registerTool(
   'list_spaces',
   {
-    description: 'List the spaces of a workspace the user collaborates on.',
+    description:
+      'List the spaces and wikis of a workspace the user collaborates on. "kind" tells them apart: a wiki holds documentation (pages, categories, folders, databases, no channels) and can be published on the web.',
     inputSchema: {
       workspaceId: locationArgs.workspaceId,
       ...pageArgs,
@@ -111,10 +112,38 @@ server.registerTool(
 );
 
 server.registerTool(
+  'get_wiki_publication',
+  {
+    description:
+      'Tell whether a wiki is published and at which address. "public" wikis are open to anyone; "link" wikis only open after the secret access link, which is never returned here.',
+    inputSchema: locationArgs,
+  },
+  run(async ({ workspaceId, spaceId }) => {
+    try {
+      const publication = await api.getWikiPublication(workspaceId, spaceId);
+      return json({
+        published: true,
+        access: publication.access,
+        slug: publication.slug,
+        url: new URL(publication.path, serverUrl).toString(),
+      });
+    } catch (error) {
+      if (
+        error instanceof ColanodeApiError &&
+        error.code === 'wiki_not_published'
+      ) {
+        return json({ published: false, reason: error.message });
+      }
+      throw error;
+    }
+  })
+);
+
+server.registerTool(
   'list_nodes',
   {
     description:
-      'List or search the nodes (pages, folders, databases, channels...) of a space. Only pages and records have a document.',
+      'List or search the nodes (pages, folders, databases, channels...) of a space or wiki. Only pages and records have a document.',
     inputSchema: {
       ...locationArgs,
       ...pageArgs,
@@ -183,7 +212,7 @@ server.registerTool(
   'create_page',
   {
     description:
-      'Create a page in a space, optionally with Markdown content. Supports headings (#, ##, ###), bold, italic, strikethrough, inline code, links, bullet/numbered/task lists, quotes, code blocks, tables and horizontal rules.',
+      'Create a page in a space or wiki, optionally with Markdown content. Supports headings (#, ##, ###), bold, italic, strikethrough, inline code, links, bullet/numbered/task lists, quotes, code blocks, tables and horizontal rules.',
     inputSchema: {
       ...locationArgs,
       name: z.string().min(1).describe('Page title'),
@@ -220,7 +249,7 @@ server.registerTool(
   'create_category',
   {
     description:
-      'Create a category at the top level of a space. Use its id as parentId in create_page to place pages inside it.',
+      'Create a category at the top level of a space or wiki. Use its id as parentId in create_page to place pages inside it.',
     inputSchema: {
       ...locationArgs,
       name: z.string().min(1).describe('Category name'),

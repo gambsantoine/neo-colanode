@@ -10,6 +10,7 @@ import {
 import {
   NodeType,
   SpaceAttributes,
+  WikiAttributes,
   UserStatus,
   WorkspaceRole,
   WorkspaceStatus,
@@ -33,6 +34,7 @@ import {
   isApiIpRateLimited,
   isApiKeyRateLimited,
 } from '@colanode/server/lib/rate-limits';
+import { buildWikiPathPrefix } from '@colanode/server/lib/wikis/publications';
 
 const escapeLikePattern = (value: string) =>
   `%${value.replace(/[\\%_]/g, '\\$&')}%`;
@@ -55,14 +57,16 @@ const mapWorkspace = (
 });
 
 const mapSpace = (node: SelectNode, role: ApiSpace['role']): ApiSpace => {
-  const attributes = node.attributes as SpaceAttributes;
+  const attributes = node.attributes as SpaceAttributes | WikiAttributes;
   return {
     id: node.id,
     workspaceId: node.workspace_id,
+    kind: attributes.type === 'wiki' ? 'wiki' : 'space',
     name: attributes.name,
     description: attributes.description ?? null,
     avatar: attributes.avatar ?? null,
-    visibility: attributes.visibility,
+    // Wikis are shared through their publication, not this flag.
+    visibility: attributes.type === 'space' ? attributes.visibility : 'private',
     role,
     createdAt: node.created_at.toISOString(),
     createdBy: node.created_by,
@@ -79,7 +83,7 @@ const selectAccessibleSpaces = (access: ApiWorkspaceAccess) =>
     .selectAll('nodes')
     .select('collaborations.role as collaboration_role')
     .where('nodes.workspace_id', '=', access.workspaceId)
-    .where('nodes.type', '=', 'space')
+    .where('nodes.type', 'in', ['space', 'wiki'])
     .where('collaborations.collaborator_id', '=', access.userId)
     .where('collaborations.deleted_at', 'is', null);
 
@@ -216,6 +220,25 @@ export const apiRepository: ApiRepository = {
       .executeTakeFirst();
 
     return row ? mapSpace(row, row.collaboration_role) : null;
+  },
+  getWikiPublication: async (access, spaceId) => {
+    const publication = await database
+      .selectFrom('wiki_publications')
+      .selectAll()
+      .where('wiki_id', '=', spaceId)
+      .where('workspace_id', '=', access.workspaceId)
+      .executeTakeFirst();
+
+    if (!publication) {
+      return null;
+    }
+
+    return {
+      wikiId: publication.wiki_id,
+      slug: publication.slug,
+      access: publication.access,
+      path: buildWikiPathPrefix(publication.slug),
+    };
   },
   listNodes: async (access, spaceId, filters, page) => {
     let query = database

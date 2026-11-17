@@ -102,6 +102,18 @@ export class ColanodeApi {
     );
   }
 
+  async getWikiPublication(workspaceId: string, spaceId: string) {
+    const result = await this.request<{
+      data: {
+        wikiId: string;
+        slug: string;
+        access: 'link' | 'public';
+        path: string;
+      };
+    }>('GET', `${this.spacePath(workspaceId, spaceId)}/publication`);
+    return result.data;
+  }
+
   listNodes(workspaceId: string, spaceId: string, query: ListParams) {
     return this.request<Page<ApiNode>>(
       'GET',

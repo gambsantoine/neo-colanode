@@ -27,6 +27,8 @@ export type ApiWorkspace = z.infer<typeof apiWorkspaceSchema>;
 export const apiSpaceSchema = z.object({
   id: z.string(),
   workspaceId: z.string(),
+  // A wiki is a space meant to be read as documentation; it can be published.
+  kind: z.enum(['space', 'wiki']),
   name: z.string(),
   description: z.string().nullable(),
   avatar: z.string().nullable(),
@@ -39,6 +41,17 @@ export const apiSpaceSchema = z.object({
 });
 
 export type ApiSpace = z.infer<typeof apiSpaceSchema>;
+
+export const apiWikiPublicationSchema = z.object({
+  wikiId: z.string(),
+  slug: z.string(),
+  access: z.enum(['link', 'public']),
+  // Path of the published wiki on the server, e.g. "/wiki/product-docs".
+  // With `link` access it only opens after the secret access link.
+  path: z.string(),
+});
+
+export type ApiWikiPublication = z.infer<typeof apiWikiPublicationSchema>;
 
 export const apiNodeSchema = z.object({
   id: z.string(),
