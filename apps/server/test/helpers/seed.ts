@@ -4,7 +4,7 @@ import {
   IdType,
   UserStatus,
   WorkspaceStatus,
-} from '@colanode/core';
+ getNodeModel, NodeAttributes , FileStatus } from '@colanode/core';
 import { YDoc } from '@colanode/crdt';
 import { database } from '@colanode/server/data/database';
 import type {
@@ -17,8 +17,6 @@ import { generatePasswordHash } from '@colanode/server/lib/accounts';
 import { createNode } from '@colanode/server/lib/nodes';
 import { generateToken } from '@colanode/server/lib/tokens';
 import { DeviceType } from '@colanode/server/types/devices';
-import { getNodeModel, NodeAttributes } from '@colanode/core';
-import { FileStatus } from '@colanode/core';
 
 export const createAccount = async (input?: {
   email?: string;
