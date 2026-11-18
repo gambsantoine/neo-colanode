@@ -1,8 +1,7 @@
 import { Check, Copy, RefreshCw } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Container } from '@colanode/ui/components/layouts/containers/container';
-import { PasswordToolBreadcrumb } from '@colanode/ui/components/tools/password/password-tool-breadcrumb';
+import { ToolContainer } from '@colanode/ui/components/tools/tool-container';
 import { Button } from '@colanode/ui/components/ui/button';
 import { Checkbox } from '@colanode/ui/components/ui/checkbox';
 import { Input } from '@colanode/ui/components/ui/input';
@@ -99,8 +98,8 @@ export const PasswordToolContainer = () => {
   const symbolCount = normalizePasswordSymbols(options.symbolSet).length;
 
   return (
-    <Container type="full" breadcrumb={<PasswordToolBreadcrumb />}>
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 py-6">
+    <ToolContainer>
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 lg:px-10">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <div
@@ -242,6 +241,6 @@ export const PasswordToolContainer = () => {
           ))}
         </div>
       </div>
-    </Container>
+    </ToolContainer>
   );
 };

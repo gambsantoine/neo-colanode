@@ -1,8 +1,7 @@
 import { Check, Copy, FileImage, ImageDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { Container } from '@colanode/ui/components/layouts/containers/container';
-import { ToolBreadcrumb } from '@colanode/ui/components/tools/tool-breadcrumb';
+import { ToolContainer } from '@colanode/ui/components/tools/tool-container';
 import { ToolSegmented } from '@colanode/ui/components/tools/tool-segmented';
 import { Button } from '@colanode/ui/components/ui/button';
 import { Checkbox } from '@colanode/ui/components/ui/checkbox';
@@ -117,11 +116,8 @@ export const QrCodeToolContainer = () => {
   const isReady = preview.status === 'ready';
 
   return (
-    <Container
-      type="full"
-      breadcrumb={<ToolBreadcrumb id="qrcode" name="QR code generator" />}
-    >
-      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-8 py-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]">
+    <ToolContainer>
+      <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-8 px-4 py-6 md:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:px-10">
         <div className="flex flex-col gap-6">
           <ToolSegmented<QrMode>
             aria-label="Content type"
@@ -336,6 +332,6 @@ export const QrCodeToolContainer = () => {
           </div>
         </div>
       </div>
-    </Container>
+    </ToolContainer>
   );
 };

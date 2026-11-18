@@ -1,8 +1,7 @@
 import { ArrowLeftRight, Check, Copy, Download, Eraser } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 
-import { Container } from '@colanode/ui/components/layouts/containers/container';
-import { ToolBreadcrumb } from '@colanode/ui/components/tools/tool-breadcrumb';
+import { ToolContainer } from '@colanode/ui/components/tools/tool-container';
 import { ToolSegmented } from '@colanode/ui/components/tools/tool-segmented';
 import { Button } from '@colanode/ui/components/ui/button';
 import { Checkbox } from '@colanode/ui/components/ui/checkbox';
@@ -76,11 +75,7 @@ export const JsonToolContainer = () => {
   };
 
   return (
-    <Container
-      type="full"
-      breadcrumb={<ToolBreadcrumb id="json" name="JSON / YAML formatter" />}
-      flush
-    >
+    <ToolContainer>
       <div className="flex h-full flex-col">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-input bg-muted/30 px-3 py-2">
           <div className="flex items-center gap-2">
@@ -257,6 +252,6 @@ export const JsonToolContainer = () => {
           </div>
         </div>
       </div>
-    </Container>
+    </ToolContainer>
   );
 };

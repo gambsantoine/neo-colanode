@@ -38,14 +38,14 @@ export const Ribbon = ({ tabs, value, onValueChange, status }: RibbonProps) => {
             <TabsPrimitive.Trigger
               key={tab.id}
               value={tab.id}
-              className="relative px-3 py-1.5 text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:bottom-0 data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-full data-[state=active]:after:bg-primary"
+              className="relative px-2.5 py-1 text-xs text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:text-foreground data-[state=active]:font-medium data-[state=active]:text-foreground data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:bottom-0 data-[state=active]:after:h-0.5 data-[state=active]:after:rounded-full data-[state=active]:after:bg-primary"
             >
               {tab.label}
             </TabsPrimitive.Trigger>
           ))}
         </TabsPrimitive.List>
         {status && (
-          <div className="ml-auto flex min-w-0 items-center gap-2 pr-2 text-sm text-muted-foreground">
+          <div className="ml-auto flex min-w-0 items-center gap-2 pr-2 text-xs text-muted-foreground">
             {status}
           </div>
         )}
@@ -54,7 +54,8 @@ export const Ribbon = ({ tabs, value, onValueChange, status }: RibbonProps) => {
         <TabsPrimitive.Content
           key={tab.id}
           value={tab.id}
-          className="flex min-h-[5.5rem] items-stretch overflow-x-auto px-1 py-1.5 outline-none"
+          // Fixed height: the tool below keeps the rest of the page.
+          className="flex h-[3.75rem] items-stretch overflow-x-auto overflow-y-hidden px-1 py-0.5 outline-none"
         >
           {tab.content}
         </TabsPrimitive.Content>
@@ -66,22 +67,22 @@ export const Ribbon = ({ tabs, value, onValueChange, status }: RibbonProps) => {
 interface RibbonGroupProps {
   label: string;
   children: ReactNode;
-  // Lays small buttons out in columns of three rows, like Word.
+  // Lays small buttons out in columns of two rows.
   compact?: boolean;
 }
 
 export const RibbonGroup = ({ label, children, compact }: RibbonGroupProps) => {
   return (
-    <div className="flex shrink-0 flex-col border-r border-input px-1.5 last:border-r-0">
+    <div className="flex shrink-0 flex-col border-r border-input px-1 last:border-r-0">
       <div
         className={cn(
           'flex flex-1 items-center gap-0.5',
-          compact && 'grid grid-flow-col grid-rows-3 items-stretch gap-x-1'
+          compact && 'grid grid-flow-col grid-rows-2 items-stretch gap-x-1'
         )}
       >
         {children}
       </div>
-      <p className="pt-1 text-center text-[11px] leading-none text-muted-foreground">
+      <p className="pt-0.5 text-center text-[10px] leading-none text-muted-foreground">
         {label}
       </p>
     </div>
@@ -128,13 +129,13 @@ export const RibbonButton = forwardRef<HTMLButtonElement, RibbonButtonProps>(
           'flex items-center rounded-sm text-foreground outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-40',
           active && 'bg-accent',
           size === 'lg'
-            ? 'h-full min-w-14 flex-col justify-center gap-1 px-2 py-1 text-xs'
-            : 'h-6 gap-1.5 px-1.5 text-xs whitespace-nowrap',
+            ? 'h-full min-w-12 flex-col justify-center gap-0.5 px-1.5 py-0.5 text-[11px]'
+            : 'h-5 gap-1 px-1.5 text-[11px] whitespace-nowrap',
           className
         )}
         {...props}
       >
-        {Icon && <Icon className={size === 'lg' ? 'size-6' : 'size-3.5'} />}
+        {Icon && <Icon className={size === 'lg' ? 'size-4' : 'size-3'} />}
         <span>{label}</span>
       </button>
     );

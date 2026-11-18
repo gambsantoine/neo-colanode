@@ -3,7 +3,6 @@ import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { DiagramPreview } from '@colanode/ui/components/diagrams/diagram-preview';
-import { Container } from '@colanode/ui/components/layouts/containers/container';
 import { DiagramOpenDialog } from '@colanode/ui/components/tools/diagrams/diagram-open-dialog';
 import {
   DiagramLayout,
@@ -14,7 +13,7 @@ import {
   DiagramSaveDialog,
   DiagramSaveTarget,
 } from '@colanode/ui/components/tools/diagrams/diagram-save-dialog';
-import { DiagramToolBreadcrumb } from '@colanode/ui/components/tools/diagrams/diagram-tool-breadcrumb';
+import { ToolContainer } from '@colanode/ui/components/tools/tool-container';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -442,11 +441,7 @@ export const DiagramToolContainer = ({
   const lineCount = code.split('\n').length;
 
   return (
-    <Container
-      type="full"
-      breadcrumb={<DiagramToolBreadcrumb language={language} />}
-      flush
-    >
+    <ToolContainer>
       <div className="flex h-full flex-col">
         <DiagramRibbon
           language={language}
@@ -620,6 +615,6 @@ export const DiagramToolContainer = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Container>
+    </ToolContainer>
   );
 };

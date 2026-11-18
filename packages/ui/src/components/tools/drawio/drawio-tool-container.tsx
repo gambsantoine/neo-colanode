@@ -2,15 +2,14 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import { Container } from '@colanode/ui/components/layouts/containers/container';
 import { DiagramOpenDialog } from '@colanode/ui/components/tools/diagrams/diagram-open-dialog';
 import {
   buildBaseName,
   DiagramSaveDialog,
   DiagramSaveTarget,
 } from '@colanode/ui/components/tools/diagrams/diagram-save-dialog';
-import { DiagramToolBreadcrumb } from '@colanode/ui/components/tools/diagrams/diagram-tool-breadcrumb';
 import { DrawioRibbon } from '@colanode/ui/components/tools/drawio/drawio-ribbon';
+import { ToolContainer } from '@colanode/ui/components/tools/tool-container';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -436,11 +435,7 @@ export const DrawioToolContainer = () => {
   }, [pendingFileId, isLoadingFiles, status]);
 
   return (
-    <Container
-      type="full"
-      breadcrumb={<DiagramToolBreadcrumb language={drawioLanguage} />}
-      flush
-    >
+    <ToolContainer>
       <div className="flex h-full flex-col">
         <DrawioRibbon
           fileName={fileName}
@@ -459,9 +454,7 @@ export const DrawioToolContainer = () => {
         />
         {status === 'error' ? (
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
-            <p>
-              The draw.io editor could not be loaded. Your draft is kept.
-            </p>
+            <p>The draw.io editor could not be loaded. Your draft is kept.</p>
             <Button
               type="button"
               variant="outline"
@@ -546,6 +539,6 @@ export const DrawioToolContainer = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Container>
+    </ToolContainer>
   );
 };

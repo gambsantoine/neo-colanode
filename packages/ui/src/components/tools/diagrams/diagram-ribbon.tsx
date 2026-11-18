@@ -90,9 +90,9 @@ export const DiagramRibbon = (props: DiagramRibbonProps) => {
   const status: ReactNode = (
     <>
       {props.isLoadingFile ? (
-        <Spinner className="size-4 shrink-0" />
+        <Spinner className="size-3.5 shrink-0" />
       ) : (
-        <FileCode2 className="size-4 shrink-0" />
+        <FileCode2 className="size-3.5 shrink-0" />
       )}
       <span className="truncate font-medium text-foreground">
         {props.fileName}
@@ -334,7 +334,7 @@ export const DiagramRibbon = (props: DiagramRibbonProps) => {
                   label="Zoom out"
                   onClick={props.onZoomOut}
                 />
-                <div className="flex min-w-14 flex-col items-center justify-center text-xs tabular-nums">
+                <div className="flex min-w-12 flex-col items-center justify-center text-[11px] tabular-nums">
                   {props.zoom === undefined
                     ? 'Fit'
                     : `${Math.round(props.zoom * 100)}%`}
