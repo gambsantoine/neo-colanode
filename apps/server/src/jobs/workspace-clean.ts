@@ -2,6 +2,7 @@ import { database } from '@colanode/server/data/database';
 import { JobHandler } from '@colanode/server/jobs';
 import { createLogger } from '@colanode/server/lib/logger';
 import { storage } from '@colanode/server/lib/storage';
+import { deleteWorkspaceWikiPublications } from '@colanode/server/lib/wikis/cleanup';
 
 const BATCH_SIZE = 500;
 const logger = createLogger('server:job:clean-workspace-data');
@@ -28,6 +29,7 @@ export const workspaceCleanHandler: JobHandler<WorkspaceCleanInput> = async (
     await deleteWorkspaceUsers(input.workspaceId);
     await deleteWorkspaceNodes(input.workspaceId);
     await deleteWorkspaceUploads(input.workspaceId);
+    await deleteWorkspaceWikiPublications(input.workspaceId);
   } catch (error) {
     logger.error(error, `Error cleaning workspace data`);
     throw error;

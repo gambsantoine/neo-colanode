@@ -35,6 +35,7 @@ export const Register = () => {
 
   const handleRegisterSubmit = async (values: {
     name: string;
+    username: string;
     email: string;
     password: string;
     confirmPassword: string;
@@ -47,6 +48,7 @@ export const Register = () => {
       input: {
         type: 'email.register',
         name: values.name,
+        username: values.username,
         email: values.email,
         password: values.password,
         server: auth.server.domain,

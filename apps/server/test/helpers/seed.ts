@@ -4,7 +4,7 @@ import {
   IdType,
   UserStatus,
   WorkspaceStatus,
-} from '@colanode/core';
+ getNodeModel, NodeAttributes , FileStatus } from '@colanode/core';
 import { YDoc } from '@colanode/crdt';
 import { database } from '@colanode/server/data/database';
 import type {
@@ -17,8 +17,6 @@ import { generatePasswordHash } from '@colanode/server/lib/accounts';
 import { createNode } from '@colanode/server/lib/nodes';
 import { generateToken } from '@colanode/server/lib/tokens';
 import { DeviceType } from '@colanode/server/types/devices';
-import { getNodeModel, NodeAttributes } from '@colanode/core';
-import { FileStatus } from '@colanode/core';
 
 export const createAccount = async (input?: {
   email?: string;
@@ -26,7 +24,8 @@ export const createAccount = async (input?: {
   status?: AccountStatus;
   password?: string | null;
 }): Promise<SelectAccount> => {
-  const email = input?.email ?? `user-${generateId(IdType.Account)}@example.com`;
+  const email =
+    input?.email ?? `user-${generateId(IdType.Account)}@example.com`;
   const name = input?.name ?? 'Test User';
   const status = input?.status ?? AccountStatus.Active;
 
@@ -184,6 +183,60 @@ export const createSpaceNode = async (input: {
   }
 
   return spaceId;
+};
+
+export const createWikiNode = async (input: {
+  workspaceId: string;
+  userId: string;
+  name?: string;
+}): Promise<string> => {
+  const wikiId = generateId(IdType.Wiki);
+  const created = await createNode({
+    nodeId: wikiId,
+    rootId: wikiId,
+    attributes: {
+      type: 'wiki',
+      name: input.name ?? 'Test Wiki',
+      description: null,
+      avatar: null,
+      collaborators: { [input.userId]: 'admin' },
+    },
+    userId: input.userId,
+    workspaceId: input.workspaceId,
+  });
+
+  if (!created) {
+    throw new Error('Failed to create wiki node');
+  }
+
+  return wikiId;
+};
+
+export const createCategoryNode = async (input: {
+  workspaceId: string;
+  userId: string;
+  parentId: string;
+  rootId: string;
+  name?: string;
+}): Promise<string> => {
+  const categoryId = generateId(IdType.Category);
+  const created = await createNode({
+    nodeId: categoryId,
+    rootId: input.rootId,
+    attributes: {
+      type: 'category',
+      name: input.name ?? 'Test Category',
+      parentId: input.parentId,
+    },
+    userId: input.userId,
+    workspaceId: input.workspaceId,
+  });
+
+  if (!created) {
+    throw new Error('Failed to create category node');
+  }
+
+  return categoryId;
 };
 
 export const createPageNode = async (input: {

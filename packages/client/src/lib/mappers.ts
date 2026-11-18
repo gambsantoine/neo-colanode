@@ -131,6 +131,7 @@ export const mapAccount = (row: SelectAccount): Account => {
     id: row.id,
     server: row.server,
     name: row.name,
+    username: row.username ?? null,
     avatar: row.avatar,
     deviceId: row.device_id,
     email: row.email,

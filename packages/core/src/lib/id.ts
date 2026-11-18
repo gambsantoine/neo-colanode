@@ -9,6 +9,7 @@ export enum IdType {
   Version = 've',
   Mutation = 'mu',
   Space = 'sp',
+  Wiki = 'wk',
   Category = 'cg',
   Page = 'pg',
   Presentation = 'pr',

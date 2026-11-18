@@ -5,12 +5,12 @@ import {
   matchesTagFilters,
   parseSearchQuery,
 } from '@colanode/client/lib/search';
-import { normalizeTag } from '@colanode/core';
 import {
   SEARCH_HIGHLIGHT_END,
   SEARCH_HIGHLIGHT_START,
 } from '@colanode/client/queries';
 import { LocalNode } from '@colanode/client/types';
+import { normalizeTag } from '@colanode/core';
 import {
   getSearchResultTarget,
   splitSearchSnippet,

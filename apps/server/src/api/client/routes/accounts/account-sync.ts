@@ -111,6 +111,7 @@ export const accountSyncRoute: FastifyPluginCallbackZod = (
         account: {
           id: account.id,
           name: account.name,
+          username: account.username,
           email: account.email,
           avatar: account.avatar,
         },

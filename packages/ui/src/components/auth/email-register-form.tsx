@@ -1,7 +1,13 @@
 import { useForm } from '@tanstack/react-form';
 import { Mail } from 'lucide-react';
+import { useRef } from 'react';
 import { z } from 'zod/v4';
 
+import {
+  isValidUsername,
+  normalizeUsername,
+  suggestUsername,
+} from '@colanode/core';
 import { Button } from '@colanode/ui/components/ui/button';
 import {
   Field,
@@ -14,6 +20,10 @@ import { Spinner } from '@colanode/ui/components/ui/spinner';
 const formSchema = z
   .object({
     name: z.string().min(2),
+    username: z.string().transform(normalizeUsername).refine(isValidUsername, {
+      message:
+        'Use 3 to 32 lowercase letters, digits, dots, dashes or underscores.',
+    }),
     email: z.string().min(2).email(),
     password: z
       .string()
@@ -37,9 +47,12 @@ interface RegisterFormProps {
 }
 
 export const RegisterForm = ({ isPending, onSubmit }: RegisterFormProps) => {
+  // The username follows the name until the user edits it.
+  const usernameEdited = useRef(false);
   const form = useForm({
     defaultValues: {
       name: '',
+      username: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -48,7 +61,7 @@ export const RegisterForm = ({ isPending, onSubmit }: RegisterFormProps) => {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      onSubmit(value);
+      onSubmit({ ...value, username: normalizeUsername(value.username) });
     },
   });
 
@@ -73,11 +86,52 @@ export const RegisterForm = ({ isPending, onSubmit }: RegisterFormProps) => {
                 name={field.name}
                 value={field.state.value}
                 onBlur={field.handleBlur}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={(e) => {
+                  field.handleChange(e.target.value);
+                  if (!usernameEdited.current) {
+                    form.setFieldValue(
+                      'username',
+                      e.target.value.trim()
+                        ? suggestUsername(e.target.value)
+                        : ''
+                    );
+                  }
+                }}
                 aria-invalid={isInvalid}
                 placeholder="John Doe"
                 autoComplete="name"
               />
+              {isInvalid && <FieldError errors={field.state.meta.errors} />}
+            </Field>
+          );
+        }}
+      />
+      <form.Field
+        name="username"
+        children={(field) => {
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldLabel htmlFor={field.name}>Username</FieldLabel>
+              <Input
+                id={field.name}
+                name={field.name}
+                value={field.state.value}
+                onBlur={field.handleBlur}
+                onChange={(e) => {
+                  usernameEdited.current = true;
+                  field.handleChange(e.target.value);
+                }}
+                aria-invalid={isInvalid}
+                aria-describedby="username-hint"
+                placeholder="john_doe"
+                autoComplete="username"
+              />
+              <p id="username-hint" className="text-xs text-muted-foreground">
+                Shown instead of your name on public pages, such as published
+                wikis.
+              </p>
               {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
           );

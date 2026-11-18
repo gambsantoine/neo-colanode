@@ -1,4 +1,4 @@
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { NodeRole, hasNodeRole } from '@colanode/core';
 import { NodeCollaborators } from '@colanode/ui/components/collaborators/node-collaborators';
 import { SpaceDelete } from '@colanode/ui/components/spaces/space-delete';
@@ -7,10 +7,11 @@ import {
   SpaceFormValues,
 } from '@colanode/ui/components/spaces/space-form';
 import { Separator } from '@colanode/ui/components/ui/separator';
+import { WikiPublication } from '@colanode/ui/components/wikis/wiki-publication';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 
 interface SpaceContainerProps {
-  space: LocalSpaceNode;
+  space: LocalSpaceLikeNode;
   role: NodeRole;
 }
 
@@ -27,7 +28,7 @@ export const SpaceContainer = ({ space, role }: SpaceContainerProps) => {
     }
 
     nodes.update(space.id, (draft) => {
-      if (draft.type !== 'space') {
+      if (draft.type !== 'space' && draft.type !== 'wiki') {
         return;
       }
 
@@ -55,6 +56,22 @@ export const SpaceContainer = ({ space, role }: SpaceContainerProps) => {
           submitText="Update"
         />
       </div>
+
+      {space.type === 'wiki' && role && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">
+              Publication
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Share this wiki outside the workspace, as documentation readable
+              in any browser.
+            </p>
+            <Separator className="mt-3" />
+          </div>
+          <WikiPublication wiki={space} role={role} />
+        </div>
+      )}
 
       <div className="space-y-6">
         <div>

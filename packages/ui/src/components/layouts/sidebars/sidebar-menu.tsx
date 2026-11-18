@@ -1,9 +1,9 @@
-import { count, eq, inArray, useLiveQuery } from '@tanstack/react-db';
+import { count, inArray, useLiveQuery } from '@tanstack/react-db';
 import { MessageCircle, Plus, Search, Settings, Wrench } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  LocalSpaceNode,
+  LocalSpaceLikeNode,
   SidebarMenuType,
   UploadStatus,
 } from '@colanode/client/types';
@@ -63,7 +63,7 @@ export const SidebarMenu = ({
     (q) =>
       q
         .from({ nodes: workspace.collections.nodes })
-        .where(({ nodes }) => eq(nodes.type, 'space'))
+        .where(({ nodes }) => inArray(nodes.type, ['space', 'wiki']))
         .orderBy(({ nodes }) => nodes.id, 'asc'),
     [workspace.userId]
   );
@@ -74,7 +74,7 @@ export const SidebarMenu = ({
   );
 
   const spaces = sortSpaces(
-    spaceListQuery.data.map((node) => node as LocalSpaceNode),
+    spaceListQuery.data.map((node) => node as LocalSpaceLikeNode),
     spaceOrder
   );
 

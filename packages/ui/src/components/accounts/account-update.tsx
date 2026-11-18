@@ -4,6 +4,7 @@ import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
+import { isValidUsername, normalizeUsername } from '@colanode/core';
 import { collections } from '@colanode/ui/collections';
 import { Avatar } from '@colanode/ui/components/avatars/avatar';
 import { Button } from '@colanode/ui/components/ui/button';
@@ -23,6 +24,10 @@ import { cn } from '@colanode/ui/lib/utils';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters long.'),
+  username: z.string().transform(normalizeUsername).refine(isValidUsername, {
+    message:
+      'Use 3 to 32 lowercase letters, digits, dots, dashes or underscores.',
+  }),
   avatar: z.string().nullable(),
   email: z.email('Invalid email address'),
 });
@@ -36,6 +41,7 @@ export const AccountUpdate = () => {
         .where(({ accounts }) => eq(accounts.id, workspace.accountId))
         .select(({ accounts }) => ({
           name: accounts.name,
+          username: accounts.username,
           avatar: accounts.avatar,
           email: accounts.email,
         })),
@@ -50,6 +56,7 @@ export const AccountUpdate = () => {
   const form = useForm({
     defaultValues: {
       name: accountData?.name ?? '',
+      username: accountData?.username ?? '',
       email: accountData?.email ?? '',
       avatar: accountData?.avatar ?? null,
     },
@@ -66,6 +73,7 @@ export const AccountUpdate = () => {
           type: 'account.update',
           id: workspace.accountId,
           name: value.name,
+          username: normalizeUsername(value.username),
           avatar: value.avatar,
         },
         onSuccess() {
@@ -186,6 +194,35 @@ export const AccountUpdate = () => {
                       aria-invalid={isInvalid}
                       placeholder="Name"
                     />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            />
+            <form.Field
+              name="username"
+              children={(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid} className="flex-1">
+                    <FieldLabel htmlFor={field.name}>Username *</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                      placeholder="john_doe"
+                      autoComplete="username"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Shown instead of your name on public pages, such as
+                      published wikis.
+                    </p>
                     {isInvalid && (
                       <FieldError errors={field.state.meta.errors} />
                     )}

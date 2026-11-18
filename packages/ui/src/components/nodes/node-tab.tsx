@@ -38,6 +38,7 @@ export const NodeTab = ({ userId, nodeId }: NodeTabProps) => {
 
   switch (node.type) {
     case 'space':
+    case 'wiki':
       return <SpaceTab space={node} />;
     case 'channel':
       return <ChannelTab channel={node} />;

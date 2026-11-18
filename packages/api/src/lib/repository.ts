@@ -9,6 +9,7 @@ import {
   ApiNodeUpdateInput,
   ApiSpace,
   ApiWorkspace,
+  ApiWikiPublication,
 } from './schemas';
 
 export type ApiKeyVerifyResult = {
@@ -76,6 +77,11 @@ export interface ApiRepository {
     access: ApiWorkspaceAccess,
     spaceId: string
   ): Promise<ApiSpace | null>;
+  /** null when the space is not a wiki, or the wiki is not published. */
+  getWikiPublication(
+    access: ApiWorkspaceAccess,
+    spaceId: string
+  ): Promise<ApiWikiPublication | null>;
 
   listNodes(
     access: ApiWorkspaceAccess,

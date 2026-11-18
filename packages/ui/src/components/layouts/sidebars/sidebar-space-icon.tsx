@@ -1,6 +1,7 @@
+import { BookOpen } from 'lucide-react';
 import { useCallback, useMemo } from 'react';
 
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { Avatar } from '@colanode/ui/components/avatars/avatar';
 import { SidebarDropIndicator } from '@colanode/ui/components/layouts/sidebars/sidebar-drop-indicator';
 import {
@@ -14,7 +15,7 @@ import { cn } from '@colanode/ui/lib/utils';
 const SPACE_DND_TYPE = 'sidebar-space';
 
 interface SidebarSpaceIconProps {
-  space: LocalSpaceNode;
+  space: LocalSpaceLikeNode;
   previousId: string | null;
   isActive: boolean;
   onClick: () => void;
@@ -77,9 +78,19 @@ export const SidebarSpaceIcon = ({
               !isActive && 'rounded-2xl'
             )}
           />
+          {space.type === 'wiki' && (
+            <span
+              className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full border border-sidebar-border bg-sidebar text-muted-foreground"
+              aria-label="Wiki"
+            >
+              <BookOpen className="size-2.5" />
+            </span>
+          )}
         </div>
       </TooltipTrigger>
-      <TooltipContent side="right">{space.name}</TooltipContent>
+      <TooltipContent side="right">
+        {space.type === 'wiki' ? `${space.name} (wiki)` : space.name}
+      </TooltipContent>
     </Tooltip>
   );
 };

@@ -43,6 +43,9 @@ import { SpaceChildReorderMutationHandler } from './spaces/space-child-reorder';
 import { UserRoleUpdateMutationHandler } from './users/user-role-update';
 import { UserStorageUpdateMutationHandler } from './users/user-storage-update';
 import { UsersCreateMutationHandler } from './users/users-create';
+import { WikiPublicationDeleteMutationHandler } from './wikis/wiki-publication-delete';
+import { WikiPublicationLinkCreateMutationHandler } from './wikis/wiki-publication-link-create';
+import { WikiPublicationUpdateMutationHandler } from './wikis/wiki-publication-update';
 import { WorkspaceCreateMutationHandler } from './workspaces/workspace-create';
 import { WorkspaceDeleteMutationHandler } from './workspaces/workspace-delete';
 import { WorkspaceUpdateMutationHandler } from './workspaces/workspace-update';
@@ -88,6 +91,10 @@ export const buildMutationHandlerMap = (
     'api.key.create.workspace': new ApiKeyCreateWorkspaceMutationHandler(app),
     'api.key.revoke': new ApiKeyRevokeMutationHandler(app),
     'api.key.revoke.workspace': new ApiKeyRevokeWorkspaceMutationHandler(app),
+    'wiki.publication.update': new WikiPublicationUpdateMutationHandler(app),
+    'wiki.publication.delete': new WikiPublicationDeleteMutationHandler(app),
+    'wiki.publication.link.create':
+      new WikiPublicationLinkCreateMutationHandler(app),
     'document.update': new DocumentUpdateMutationHandler(app),
     'metadata.update': new MetadataUpdateMutationHandler(app),
     'metadata.delete': new MetadataDeleteMutationHandler(app),

@@ -1,7 +1,7 @@
-import { eq, useLiveQuery } from '@tanstack/react-db';
+import { inArray, useLiveQuery } from '@tanstack/react-db';
 import { useState } from 'react';
 
-import { LocalSpaceNode, SidebarMenuType } from '@colanode/client/types';
+import { LocalSpaceLikeNode, SidebarMenuType } from '@colanode/client/types';
 import { SidebarChats } from '@colanode/ui/components/layouts/sidebars/sidebar-chats';
 import { SidebarMenu } from '@colanode/ui/components/layouts/sidebars/sidebar-menu';
 import { SidebarSettings } from '@colanode/ui/components/layouts/sidebars/sidebar-settings';
@@ -26,7 +26,7 @@ export const Sidebar = () => {
     (q) =>
       q
         .from({ nodes: workspace.collections.nodes })
-        .where(({ nodes }) => eq(nodes.type, 'space'))
+        .where(({ nodes }) => inArray(nodes.type, ['space', 'wiki']))
         .orderBy(({ nodes }) => nodes.id, 'asc'),
     [workspace.userId]
   );
@@ -37,7 +37,7 @@ export const Sidebar = () => {
   );
 
   const spaces = sortSpaces(
-    spaceListQuery.data.map((node) => node as LocalSpaceNode),
+    spaceListQuery.data.map((node) => node as LocalSpaceLikeNode),
     spaceOrder
   );
   const activeSpaceId =

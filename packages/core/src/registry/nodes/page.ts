@@ -14,6 +14,8 @@ export const pageAttributesSchema = z.object({
   name: z.string(),
   avatar: z.string().nullable().optional(),
   parentId: z.string(),
+  // Readable address of the node in a published wiki (`/wiki/x/<slug>`).
+  slug: z.string().nullable().optional(),
   // Workspace wide labels, used to find pages in the search (`#tag`).
   tags: z.array(z.string()).optional(),
 });

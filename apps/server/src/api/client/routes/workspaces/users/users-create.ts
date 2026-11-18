@@ -16,6 +16,7 @@ import {
 import { database } from '@colanode/server/data/database';
 import { SelectAccount } from '@colanode/server/data/schema';
 import { eventBus } from '@colanode/server/lib/event-bus';
+import { withGeneratedUsername } from '@colanode/server/lib/usernames';
 import { getNameFromEmail } from '@colanode/server/lib/utils';
 import { jobService } from '@colanode/server/services/job-service';
 
@@ -180,21 +181,24 @@ const getOrCreateAccount = async (
     return account;
   }
 
-  const createdAccount = await database
-    .insertInto('accounts')
-    .returningAll()
-    .values({
-      id: generateId(IdType.Account),
-      name: getNameFromEmail(email),
-      email: email,
-      avatar: null,
-      attributes: null,
-      password: null,
-      status: AccountStatus.Pending,
-      created_at: new Date(),
-      updated_at: null,
-    })
-    .executeTakeFirst();
+  const createdAccount = await withGeneratedUsername(email, (username) =>
+    database
+      .insertInto('accounts')
+      .returningAll()
+      .values({
+        id: generateId(IdType.Account),
+        name: getNameFromEmail(email),
+        username,
+        email: email,
+        avatar: null,
+        attributes: null,
+        password: null,
+        status: AccountStatus.Pending,
+        created_at: new Date(),
+        updated_at: null,
+      })
+      .executeTakeFirst()
+  );
 
   return createdAccount;
 };

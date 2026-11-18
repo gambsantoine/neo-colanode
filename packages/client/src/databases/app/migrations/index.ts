@@ -9,6 +9,7 @@ import { createJobSchedulesTable } from './00006-create-job-schedules-table';
 import { createTempFilesTable } from './00007-create-temp-files-table';
 import { createAvatarsTable } from './00008-create-avatars-table';
 import { createTabsTable } from './00009-create-tabs-table';
+import { addAccountUsername } from './00010-add-account-username';
 
 export const appDatabaseMigrations: Record<string, Migration> = {
   '00001-create-servers-table': createServersTable,
@@ -20,4 +21,5 @@ export const appDatabaseMigrations: Record<string, Migration> = {
   '00007-create-temp-files-table': createTempFilesTable,
   '00008-create-avatars-table': createAvatarsTable,
   '00009-create-tabs-table': createTabsTable,
+  '00010-add-account-username': addAccountUsername,
 };

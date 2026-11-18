@@ -10,6 +10,7 @@ export const categoryAttributesSchema = z.object({
   type: z.literal('category'),
   name: z.string(),
   parentId: z.string(),
+  slug: z.string().nullable().optional(),
   children: z.record(z.string(), spaceChildAttributesSchema).optional(),
 });
 
@@ -24,7 +25,7 @@ export const categoryModel: NodeModel = {
     }
 
     const parent = context.tree[context.tree.length - 1];
-    if (parent?.type !== 'space') {
+    if (parent?.type !== 'space' && parent?.type !== 'wiki') {
       return false;
     }
 

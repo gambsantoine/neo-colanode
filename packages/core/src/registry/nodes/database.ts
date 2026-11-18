@@ -22,6 +22,8 @@ export const databaseAttributesSchema = z.object({
   name: z.string(),
   avatar: z.string().nullable().optional(),
   parentId: z.string(),
+  // Readable address of the node in a published wiki (`/wiki/x/<slug>`).
+  slug: z.string().nullable().optional(),
   fields: z.record(z.string(), fieldAttributesSchema),
   nameField: databaseNameFieldAttributesSchema.nullable().optional(),
   locked: z.boolean().nullable().optional(),
