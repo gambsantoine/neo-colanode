@@ -7,6 +7,7 @@ import { workspaceApiKeyRoutes } from './api-keys';
 import { fileRoutes } from './files';
 import { mutationsRoutes } from './mutations';
 import { userRoutes } from './users';
+import { wikiRoutes } from './wikis';
 import { workspaceCreateRoute } from './workspace-create';
 import { workspaceDeleteRoute } from './workspace-delete';
 import { workspaceGetRoute } from './workspace-get';
@@ -29,6 +30,7 @@ export const workspaceRoutes: FastifyPluginCallback = (instance, _, done) => {
       subInstance.register(userRoutes, { prefix: '/users' });
       subInstance.register(mutationsRoutes, { prefix: '/mutations' });
       subInstance.register(workspaceApiKeyRoutes, { prefix: '/api-keys' });
+      subInstance.register(wikiRoutes, { prefix: '/wikis' });
     },
     {
       prefix: '/:workspaceId',

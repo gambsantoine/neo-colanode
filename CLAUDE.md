@@ -184,6 +184,7 @@ Each node type (space, page, database, message, etc.) defines:
 **Example Node Types:**
 
 - `space` - Top-level container
+- `wiki` - Top-level documentation container (no channels); can be published on the web by the server (`wiki_publications`, `apps/server/src/lib/wikis/`)
 - `page` - Rich text document
 - `database` - Structured data with custom fields and views
 - `record` - Database row
@@ -213,6 +214,8 @@ The config system supports special prefixes for dynamic value loading:
 - `env://VAR_NAME` - Resolves to environment variable at runtime (required, fails if not set)
 - `file://path/to/file` - Reads and inlines file contents at runtime (useful for certificates/secrets)
 - Direct values - Plain strings/numbers/booleans in JSON
+
+`publicUrl` (optional) is the public address of the server, used for the links of published wikis; without it they are built from the request Host header.
 
 **Example:**
 ```json
@@ -265,7 +268,7 @@ The config system supports special prefixes for dynamic value loading:
 
 **Automated Tests (Vitest):**
 
-- `apps/server`: `npm run test`
+- `apps/server`: `npm run test` (Testcontainers, needs Docker) or `npm run test:unit` (no Docker: database and Redis are mocked)
 - `apps/web`: `npm run test`
 - Repo root: `npm run test` (runs app tests via Turbo)
 - Focus manual verification on areas without test coverage

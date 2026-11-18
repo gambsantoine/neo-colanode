@@ -1,8 +1,8 @@
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { BreadcrumbItem } from '@colanode/ui/components/layouts/containers/breadcrumb-item';
 
 interface SpaceBreadcrumbItemProps {
-  space: LocalSpaceNode;
+  space: LocalSpaceLikeNode;
 }
 
 export const SpaceBreadcrumbItem = ({ space }: SpaceBreadcrumbItemProps) => {

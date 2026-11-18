@@ -191,6 +191,8 @@ export class AccountService {
 
       const hasChanges =
         response.account.name !== this.account.name ||
+        (response.account.username ?? null) !==
+          (this.account.username ?? null) ||
         response.account.avatar !== this.account.avatar;
 
       // Execute all database operations in a single transaction
@@ -203,6 +205,7 @@ export class AccountService {
             .returningAll()
             .set({
               name: response.account.name,
+              username: response.account.username ?? null,
               avatar: response.account.avatar,
               updated_at: hasChanges
                 ? new Date().toISOString()

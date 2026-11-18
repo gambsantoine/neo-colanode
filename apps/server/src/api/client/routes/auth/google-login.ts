@@ -21,6 +21,7 @@ import {
 } from '@colanode/server/lib/accounts';
 import { config } from '@colanode/server/lib/config';
 import { storage } from '@colanode/server/lib/storage';
+import { withGeneratedUsername } from '@colanode/server/lib/usernames';
 import { AccountAttributes } from '@colanode/server/types/accounts';
 
 const GoogleUserInfoUrl = 'https://www.googleapis.com/oauth2/v1/userinfo';
@@ -288,20 +289,25 @@ export const googleLoginRoute: FastifyPluginCallbackZod = (
         avatar = await uploadGooglePictureAsAvatar(googleUser.picture);
       }
 
-      const newAccount = await database
-        .insertInto('accounts')
-        .values({
-          id: generateId(IdType.Account),
-          name: googleUser.name,
-          email: googleUser.email,
-          avatar,
-          status,
-          created_at: new Date(),
-          password: null,
-          attributes: JSON.stringify({ googleId: googleUser.id }),
-        })
-        .returningAll()
-        .executeTakeFirst();
+      const newAccount = await withGeneratedUsername(
+        googleUser.name || googleUser.email,
+        (username) =>
+          database
+            .insertInto('accounts')
+            .values({
+              id: generateId(IdType.Account),
+              name: googleUser.name,
+              username,
+              email: googleUser.email,
+              avatar,
+              status,
+              created_at: new Date(),
+              password: null,
+              attributes: JSON.stringify({ googleId: googleUser.id }),
+            })
+            .returningAll()
+            .executeTakeFirst()
+      );
 
       if (!newAccount) {
         return reply.code(400).send({

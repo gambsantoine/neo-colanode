@@ -35,6 +35,8 @@ import { WorkspaceSearchQueryHandler } from './search/workspace-search';
 import { ServerListQueryHandler } from './servers/server-list';
 import { UserListQueryHandler } from './users/user-list';
 import { UserSearchQueryHandler } from './users/user-search';
+import { WikiPublicationGetQueryHandler } from './wikis/wiki-publication-get';
+import { WikiSlugAvailabilityQueryHandler } from './wikis/wiki-slug-availability';
 import { WorkspaceListQueryHandler } from './workspaces/workspace-list';
 
 export type QueryHandlerMap = {
@@ -48,6 +50,8 @@ export const buildQueryHandlerMap = (app: AppService): QueryHandlerMap => {
     'account.list': new AccountListQueryHandler(app),
     'api.key.list': new ApiKeyListQueryHandler(app),
     'api.key.list.workspace': new ApiKeyListWorkspaceQueryHandler(app),
+    'wiki.publication.get': new WikiPublicationGetQueryHandler(app),
+    'wiki.slug.availability': new WikiSlugAvailabilityQueryHandler(app),
     'node.reaction.list': new NodeReactionsListQueryHandler(app),
     'node.list': new NodeListQueryHandler(app),
     'record.field.value.count': new RecordFieldValueCountQueryHandler(app),

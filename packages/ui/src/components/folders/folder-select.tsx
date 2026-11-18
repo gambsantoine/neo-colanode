@@ -40,7 +40,7 @@ export const useWritableFolders = (): FolderOption[] => {
     (q) =>
       q
         .from({ nodes: workspace.collections.nodes })
-        .where(({ nodes }) => inArray(nodes.type, ['folder', 'space']))
+        .where(({ nodes }) => inArray(nodes.type, ['folder', 'space', 'wiki']))
         .orderBy(({ nodes }) => nodes.id, 'asc'),
     [workspace.userId]
   );
@@ -49,7 +49,7 @@ export const useWritableFolders = (): FolderOption[] => {
     const nodes = nodesQuery.data as LocalNode[];
     const spaces = new Map<string, LocalNode>();
     for (const node of nodes) {
-      if (node.type === 'space') {
+      if (node.type === 'space' || node.type === 'wiki') {
         spaces.set(node.id, node);
       }
     }
@@ -73,7 +73,9 @@ export const useWritableFolders = (): FolderOption[] => {
         avatar: node.avatar ?? null,
         spaceId: node.rootId,
         spaceName:
-          space && space.type === 'space' ? space.name : 'Unknown space',
+          space && (space.type === 'space' || space.type === 'wiki')
+            ? space.name
+            : 'Unknown space',
       });
     }
 

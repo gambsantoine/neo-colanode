@@ -4,6 +4,7 @@ import { createApiRoutes } from '@colanode/api';
 import { clientRoutes } from '@colanode/server/api/client/routes';
 import { configGetRoute } from '@colanode/server/api/config';
 import { homeRoute } from '@colanode/server/api/home';
+import { wikiPublicRoutes } from '@colanode/server/api/public/wiki-routes';
 import { apiRepository } from '@colanode/server/lib/api-repository';
 import { config } from '@colanode/server/lib/config';
 
@@ -12,6 +13,7 @@ export const apiRoutes: FastifyPluginCallback = (instance, _, done) => {
 
   instance.register(homeRoute, { prefix });
   instance.register(configGetRoute, { prefix });
+  instance.register(wikiPublicRoutes, { prefix });
   instance.register(clientRoutes, { prefix: `${prefix}/client/v1` });
   instance.register(
     createApiRoutes(apiRepository, (request) => request.client.ip),

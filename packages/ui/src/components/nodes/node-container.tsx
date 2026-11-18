@@ -40,7 +40,7 @@ const NodeContent = ({ type, onFullscreen }: NodeContentProps) => {
       onFullscreen={onFullscreen}
       flush={data.node.type === 'presentation'}
     >
-      {data.node.type === 'space' && (
+      {(data.node.type === 'space' || data.node.type === 'wiki') && (
         <SpaceContainer space={data.node} role={data.role} />
       )}
       {data.node.type === 'channel' && (

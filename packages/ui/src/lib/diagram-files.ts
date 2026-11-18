@@ -51,7 +51,9 @@ export const useDiagramFiles = (
     (q) =>
       q
         .from({ nodes: workspace.collections.nodes })
-        .where(({ nodes }) => inArray(nodes.type, ['file', 'folder', 'space']))
+        .where(({ nodes }) =>
+          inArray(nodes.type, ['file', 'folder', 'space', 'wiki'])
+        )
         .orderBy(({ nodes }) => nodes.id, 'asc'),
     [workspace.userId]
   );
@@ -60,7 +62,11 @@ export const useDiagramFiles = (
     const nodes = nodesQuery.data as LocalNode[];
     const containers = new Map<string, LocalNode>();
     for (const node of nodes) {
-      if (node.type === 'folder' || node.type === 'space') {
+      if (
+        node.type === 'folder' ||
+        node.type === 'space' ||
+        node.type === 'wiki'
+      ) {
         containers.set(node.id, node);
       }
     }
@@ -89,7 +95,9 @@ export const useDiagramFiles = (
         parentId: node.parentId,
         folderName: folder.name || 'Untitled',
         spaceName:
-          space && space.type === 'space' ? space.name : 'Unknown space',
+          space && (space.type === 'space' || space.type === 'wiki')
+            ? space.name
+            : 'Unknown space',
         updatedAt: node.updatedAt ?? node.createdAt,
         canEdit: hasNodeRole(role, 'editor'),
       });

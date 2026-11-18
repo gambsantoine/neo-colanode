@@ -239,7 +239,11 @@ export class NodeService {
     debug(`Inserting node ${id} with type ${attributes.type}`);
 
     let tree: LocalNode[] = [];
-    if (attributes.type !== 'space' && attributes.type !== 'chat') {
+    if (
+      attributes.type !== 'space' &&
+      attributes.type !== 'wiki' &&
+      attributes.type !== 'chat'
+    ) {
       tree = await fetchNodeTree(this.workspace.database, attributes.parentId!);
     }
 

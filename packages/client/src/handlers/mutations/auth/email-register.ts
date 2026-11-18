@@ -29,6 +29,7 @@ export class EmailRegisterMutationHandler
     try {
       const body: EmailRegisterInput = {
         name: input.name,
+        username: input.username,
         email: input.email,
         password: input.password,
       };

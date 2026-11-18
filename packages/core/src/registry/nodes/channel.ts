@@ -22,6 +22,11 @@ export const channelModel: NodeModel = {
       return false;
     }
 
+    // Wikis are documentation: no discussions inside.
+    if (context.tree.some((node) => node.type === 'wiki')) {
+      return false;
+    }
+
     const role = extractNodeRole(context.tree, context.user.id);
     if (!role) {
       return false;

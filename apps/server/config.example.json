@@ -6,6 +6,8 @@
   "web": {
     "domain": "localhost:4000"
   },
+  "_publicUrl": "Public address of the server, used for the links of published wikis. Set it in production, e.g. https://api.example.com",
+  "publicUrl": "http://localhost:3000",
   "mode": "standalone",
   "cors": {
     "origin": "http://localhost:4000",

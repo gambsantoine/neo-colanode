@@ -4,6 +4,7 @@ export type EmailRegisterMutationInput = {
   type: 'email.register';
   server: string;
   name: string;
+  username: string;
   email: string;
   password: string;
 };

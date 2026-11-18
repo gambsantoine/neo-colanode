@@ -1,8 +1,8 @@
-import { LocalSpaceNode } from '@colanode/client/types';
+import { LocalSpaceLikeNode } from '@colanode/client/types';
 import { Tab } from '@colanode/ui/components/layouts/tabs/tab';
 
 interface SpaceTabProps {
-  space: LocalSpaceNode;
+  space: LocalSpaceLikeNode;
 }
 
 export const SpaceTab = ({ space }: SpaceTabProps) => {

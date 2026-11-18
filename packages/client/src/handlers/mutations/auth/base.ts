@@ -26,6 +26,7 @@ export abstract class AuthMutationHandlerBase {
             id: login.account.id,
             email: login.account.email,
             name: login.account.name,
+            username: login.account.username ?? null,
             server: server.domain,
             token: login.token,
             device_id: login.deviceId,

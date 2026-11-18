@@ -33,6 +33,8 @@ import { addWorkspaceIndexToUploads } from './00030-add-workspace-index-to-uploa
 import { addCreatedAtIndexToUploads } from './00031-add-created-at-index-to-uploads';
 import { cleanupCounterTriggers } from './00032-cleanup-counter-triggers';
 import { createApiKeysTable } from './00033-create-api-keys-table';
+import { createWikiTables } from './00034-create-wiki-tables';
+import { addAccountUsernames } from './00035-add-account-usernames';
 
 export const databaseMigrations: Record<string, Migration> = {
   '00001_create_accounts_table': createAccountsTable,
@@ -72,4 +74,6 @@ export const databaseMigrations: Record<string, Migration> = {
   '00031_add_created_at_index_to_uploads': addCreatedAtIndexToUploads,
   '00032_cleanup_counter_triggers': cleanupCounterTriggers,
   '00033_create_api_keys_table': createApiKeysTable,
+  '00034_create_wiki_tables': createWikiTables,
+  '00035_add_account_usernames': addAccountUsernames,
 };

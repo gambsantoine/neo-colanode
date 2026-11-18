@@ -13,6 +13,7 @@ import {
   generateFractionalIndex,
   NodeAttributes,
   SpaceAttributes,
+  WikiAttributes,
 } from '@colanode/core';
 
 interface NodeFractionalIndex {
@@ -21,7 +22,10 @@ interface NodeFractionalIndex {
   customIndex: string | null;
 }
 
-type ContainerAttributes = SpaceAttributes | CategoryAttributes;
+type ContainerAttributes =
+  | SpaceAttributes
+  | WikiAttributes
+  | CategoryAttributes;
 
 export class SpaceChildReorderMutationHandler
   extends WorkspaceMutationHandlerBase
@@ -40,7 +44,8 @@ export class SpaceChildReorderMutationHandler
 
     const isValidParent =
       parent &&
-      ((parent.type === 'space' && parent.id === input.spaceId) ||
+      (((parent.type === 'space' || parent.type === 'wiki') &&
+        parent.id === input.spaceId) ||
         (parent.type === 'category' && parent.parent_id === input.spaceId));
 
     if (!isValidParent) {
@@ -63,7 +68,11 @@ export class SpaceChildReorderMutationHandler
       );
     }
 
-    if (child.type === 'category' && parent.type !== 'space') {
+    if (
+      child.type === 'category' &&
+      parent.type !== 'space' &&
+      parent.type !== 'wiki'
+    ) {
       throw new MutationError(
         MutationErrorCode.SpaceUpdateFailed,
         'Categories cannot be nested.'
@@ -125,7 +134,11 @@ export class SpaceChildReorderMutationHandler
       const moveResult = await workspace.nodes.updateNode<NodeAttributes>(
         input.childId,
         (attributes) => {
-          if (attributes.type === 'space' || attributes.type === 'chat') {
+          if (
+            attributes.type === 'space' ||
+            attributes.type === 'wiki' ||
+            attributes.type === 'chat'
+          ) {
             throw new MutationError(
               MutationErrorCode.SpaceUpdateFailed,
               'This node cannot be moved.'

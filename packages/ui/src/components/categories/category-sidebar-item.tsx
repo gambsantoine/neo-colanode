@@ -27,6 +27,7 @@ interface CategorySidebarItemProps {
   role: NodeRole | null;
   spaceId: string;
   previousId: string | null;
+  allowChannels?: boolean;
 }
 
 export const CategorySidebarItem = ({
@@ -34,6 +35,7 @@ export const CategorySidebarItem = ({
   role,
   spaceId,
   previousId,
+  allowChannels = true,
 }: CategorySidebarItemProps) => {
   const workspace = useWorkspace();
   const [open, setOpen] = useState(true);
@@ -117,7 +119,10 @@ export const CategorySidebarItem = ({
               <span className="line-clamp-1 text-left">{category.name}</span>
             </button>
           </CollapsibleTrigger>
-          <CategorySidebarDropdown category={category} />
+          <CategorySidebarDropdown
+            category={category}
+            allowChannels={allowChannels}
+          />
         </div>
         <CollapsibleContent>
           <ul className="flex min-w-0 flex-col gap-0.5 py-0.5">

@@ -32,6 +32,17 @@ const configSchema = z.object({
     .default('standalone')
     .transform(resolveConfigReference),
   pathPrefix: z.string().optional().transform(resolveOptionalConfigReference),
+  // Public address of the server, without the path prefix, e.g.
+  // "https://api.example.com". Used for the links of published wikis
+  // (canonical address, sitemap, access links). Without it they are built
+  // from the request Host header.
+  publicUrl: z
+    .string()
+    .optional()
+    .transform(resolveOptionalConfigReference)
+    .refine((value) => !value || /^https?:\/\/[^/]+/.test(value), {
+      message: 'publicUrl must start with http:// or https://',
+    }),
   // Addresses of the reverse proxies in front of the server, comma-separated
   // (IP, CIDR range, or `loopback`, `linklocal` and `uniquelocal`). The default
   // covers a proxy on a private network, such as the Docker one.

@@ -13,7 +13,7 @@ import {
   versionQuerySchema,
 } from '../../lib/pagination';
 import { ApiRepository } from '../../lib/repository';
-import { apiSpaceSchema } from '../../lib/schemas';
+import { apiSpaceSchema, apiWikiPublicationSchema } from '../../lib/schemas';
 import { dispatchVersion } from '../../lib/versioning';
 
 /** Routes on spaces: /workspaces/:workspaceId/spaces */
@@ -76,6 +76,56 @@ export const createSpaceRoutes = (
             }
 
             return { data: space };
+          },
+        }),
+    });
+
+    instance.route({
+      method: 'GET',
+      url: '/spaces/:spaceId/publication',
+      schema: {
+        params: z.object({ workspaceId: z.string(), spaceId: z.string() }),
+        querystring: versionQuerySchema,
+        response: {
+          200: itemOutputSchema(apiWikiPublicationSchema),
+          400: apiErrorOutputSchema,
+          404: apiErrorOutputSchema,
+        },
+      },
+      handler: async (request, reply) =>
+        dispatchVersion(request, reply, {
+          '1': async () => {
+            const space = await repository.getSpace(
+              request.apiWorkspaceAccess,
+              request.params.spaceId
+            );
+
+            if (!space) {
+              return sendError(
+                reply,
+                404,
+                ApiErrorCode.SpaceNotFound,
+                'Space not found.'
+              );
+            }
+
+            const publication = await repository.getWikiPublication(
+              request.apiWorkspaceAccess,
+              request.params.spaceId
+            );
+
+            if (!publication) {
+              return sendError(
+                reply,
+                404,
+                ApiErrorCode.WikiNotPublished,
+                space.kind === 'wiki'
+                  ? 'This wiki is not published.'
+                  : 'Only wikis can be published.'
+              );
+            }
+
+            return { data: publication };
           },
         }),
     });

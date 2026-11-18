@@ -26,7 +26,8 @@ export const NodeCollaborators = ({
   );
 
   const isAdmin = hasNodeRole(role, 'admin');
-  const canAddCollaborator = isAdmin && node.type === 'space';
+  const canAddCollaborator =
+    isAdmin && (node.type === 'space' || node.type === 'wiki');
   const ancestors = nodes.filter((node) => node.id !== node.id);
 
   return (
