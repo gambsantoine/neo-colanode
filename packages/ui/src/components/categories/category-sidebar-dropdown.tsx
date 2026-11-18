@@ -3,6 +3,7 @@ import {
   Ellipsis,
   Folder,
   MessageCircle,
+  Presentation,
   StickyNote,
   Trash2,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import { DatabaseCreateDialog } from '@colanode/ui/components/databases/database
 import { FolderCreateDialog } from '@colanode/ui/components/folders/folder-create-dialog';
 import { NodeDeleteDialog } from '@colanode/ui/components/nodes/node-delete-dialog';
 import { PageCreateDialog } from '@colanode/ui/components/pages/page-create-dialog';
+import { PresentationCreateDialog } from '@colanode/ui/components/presentations/presentation-create-dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +33,7 @@ export const CategorySidebarDropdown = ({
   category,
 }: CategorySidebarDropdownProps) => {
   const [openCreatePage, setOpenCreatePage] = useState(false);
+  const [openCreatePresentation, setOpenCreatePresentation] = useState(false);
   const [openCreateChannel, setOpenCreateChannel] = useState(false);
   const [openCreateDatabase, setOpenCreateDatabase] = useState(false);
   const [openCreateFolder, setOpenCreateFolder] = useState(false);
@@ -53,6 +56,13 @@ export const CategorySidebarDropdown = ({
           >
             <StickyNote className="size-4" />
             <span>Add page</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => setOpenCreatePresentation(true)}
+            className="flex flex-row items-center gap-2 cursor-pointer"
+          >
+            <Presentation className="size-4" />
+            <span>Add presentation</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => setOpenCreateChannel(true)}
@@ -99,6 +109,14 @@ export const CategorySidebarDropdown = ({
           rootId={category.rootId}
           open={openCreatePage}
           onOpenChange={setOpenCreatePage}
+        />
+      )}
+      {openCreatePresentation && (
+        <PresentationCreateDialog
+          parentId={category.id}
+          rootId={category.rootId}
+          open={openCreatePresentation}
+          onOpenChange={setOpenCreatePresentation}
         />
       )}
       {openCreateDatabase && (

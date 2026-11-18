@@ -1,0 +1,206 @@
+/* Slides rendered from Markdown (presentations). Sizes are in px: a slide is
+   drawn on a fixed 980x552 canvas, then scaled to fit its container. */
+
+.slide {
+  --slide-fg: #1f2328;
+  --slide-muted: #59636e;
+  --slide-bg: #ffffff;
+  --slide-accent: #2563eb;
+  --slide-code-bg: #f6f8fa;
+  --slide-border: #d1d9e0;
+  color: var(--slide-fg);
+  background: var(--slide-bg);
+  font-size: 22px;
+  line-height: 1.5;
+}
+
+.slide.slide-dark {
+  --slide-fg: #e6edf3;
+  --slide-muted: #9198a1;
+  --slide-bg: #121417;
+  --slide-accent: #60a5fa;
+  --slide-code-bg: #1d2127;
+  --slide-border: #3d444d;
+}
+
+.slide-content > :first-child {
+  margin-top: 0;
+}
+
+.slide-content > :last-child {
+  margin-bottom: 0;
+}
+
+.slide-content h1 {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0 0 20px;
+}
+
+.slide-content h2 {
+  font-size: 34px;
+  font-weight: 650;
+  line-height: 1.25;
+  margin: 0 0 16px;
+}
+
+.slide-content h3 {
+  font-size: 27px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.slide-content h4,
+.slide-content h5,
+.slide-content h6 {
+  font-size: 23px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+
+.slide-content p {
+  margin: 0 0 14px;
+}
+
+.slide-content ul,
+.slide-content ol {
+  margin: 0 0 14px;
+  padding-left: 32px;
+}
+
+.slide-content ul {
+  list-style: disc;
+}
+
+.slide-content ol {
+  list-style: decimal;
+}
+
+.slide-content li {
+  margin: 4px 0;
+}
+
+.slide-content li > ul,
+.slide-content li > ol {
+  margin: 4px 0 0;
+}
+
+.slide-content a {
+  color: var(--slide-accent);
+  text-decoration: underline;
+}
+
+.slide-content strong {
+  font-weight: 700;
+}
+
+.slide-content em {
+  font-style: italic;
+}
+
+.slide-content del {
+  text-decoration: line-through;
+}
+
+.slide-content blockquote {
+  border-left: 4px solid var(--slide-border);
+  color: var(--slide-muted);
+  margin: 0 0 14px;
+  padding: 4px 0 4px 20px;
+}
+
+.slide-content hr {
+  border: 0;
+  border-top: 1px solid var(--slide-border);
+  margin: 20px 0;
+}
+
+.slide-content :not(pre) > code {
+  background: var(--slide-code-bg);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  padding: 2px 6px;
+}
+
+/* Code blocks: see slide-code.css */
+
+.slide-content table {
+  border-collapse: collapse;
+  margin: 0 0 14px;
+}
+
+.slide-content th,
+.slide-content td {
+  border: 1px solid var(--slide-border);
+  padding: 6px 14px;
+  text-align: left;
+}
+
+.slide-content th {
+  font-weight: 600;
+}
+
+.slide-content img {
+  display: inline-block;
+  max-height: 400px;
+  max-width: 100%;
+}
+
+.slide-content .slide-mermaid {
+  display: flex;
+  justify-content: center;
+}
+
+.slide-content .slide-mermaid img {
+  max-height: 380px;
+}
+
+/* Layouts */
+
+.slide-layout-center .slide-content,
+.slide-layout-cover .slide-content,
+.slide-layout-intro .slide-content,
+.slide-layout-section .slide-content,
+.slide-layout-statement .slide-content,
+.slide-layout-fact .slide-content,
+.slide-layout-quote .slide-content,
+.slide-layout-end .slide-content {
+  text-align: center;
+}
+
+.slide-layout-cover .slide-content h1,
+.slide-layout-intro .slide-content h1 {
+  font-size: 56px;
+}
+
+.slide-layout-section .slide-content h1 {
+  font-size: 52px;
+}
+
+.slide-layout-statement .slide-content h1 {
+  font-size: 60px;
+}
+
+.slide-layout-fact .slide-content h1 {
+  font-size: 96px;
+  margin-bottom: 8px;
+}
+
+.slide-layout-quote .slide-content {
+  font-size: 30px;
+  font-style: italic;
+}
+
+.slide-layout-end .slide-content {
+  color: var(--slide-muted);
+}
+
+/* A background image makes the text white, as in Slidev's cover layout. */
+.slide.slide-has-background {
+  --slide-fg: #ffffff;
+  --slide-muted: #e5e7eb;
+  --slide-accent: #bfdbfe;
+  text-shadow: 0 1px 3px rgb(0 0 0 / 0.45);
+}

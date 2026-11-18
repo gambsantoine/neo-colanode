@@ -6,6 +6,7 @@ import { DatabaseSidebarItem } from '@colanode/ui/components/databases/database-
 import { ViewSidebarItem } from '@colanode/ui/components/databases/view-sidebar-item';
 import { FolderSidebarItem } from '@colanode/ui/components/folders/folder-sidebar-item';
 import { PageSidebarItem } from '@colanode/ui/components/pages/page-sidebar-item';
+import { PresentationSidebarItem } from '@colanode/ui/components/presentations/presentation-sidebar-item';
 
 interface SidebarItemProps {
   node: LocalNode;
@@ -23,6 +24,8 @@ export const SidebarItem = ({
       return <ChatSidebarItem chat={node} />;
     case 'page':
       return <PageSidebarItem page={node} role={role} />;
+    case 'presentation':
+      return <PresentationSidebarItem presentation={node} role={role} />;
     case 'database':
       return <DatabaseSidebarItem database={node} role={role} />;
     case 'database_view':

@@ -67,6 +67,10 @@ export const getDefaultNodeAvatar = (type: IdType): string | null => {
     return defaultIcons.folder;
   }
 
+  if (type === IdType.Presentation) {
+    return defaultIcons.presentation;
+  }
+
   if (type === IdType.Space) {
     return defaultIcons.apps;
   }

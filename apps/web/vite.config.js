@@ -42,7 +42,15 @@ export default defineConfig({
         enableWorkboxModulesLogs: true,
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
         // Heavy and only needed by one tool: loaded on demand.
-        globIgnores: ['drawio/**'],
+        globIgnores: [
+          'drawio/**',
+          // Monaco language services: never started by the presentation
+          // editor (Markdown only uses the generic editor worker).
+          'assets/ts.worker-*.js',
+          'assets/css.worker-*.js',
+          'assets/html.worker-*.js',
+          'assets/json.worker-*.js',
+        ],
       },
     }),
   ],

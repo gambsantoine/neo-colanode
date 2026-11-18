@@ -11,6 +11,7 @@ export enum IdType {
   Space = 'sp',
   Category = 'cg',
   Page = 'pg',
+  Presentation = 'pr',
   Channel = 'ch',
   Chat = 'ct',
   Node = 'nd',

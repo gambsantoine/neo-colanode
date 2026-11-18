@@ -1,6 +1,5 @@
 import { all, createLowlight } from 'lowlight';
 export const lowlight = createLowlight(all);
-const lowlightLanguages = lowlight.listLanguages();
 
 interface CodeHighlightNode {
   text: string;
@@ -242,7 +241,8 @@ export const highlightCode = (
 ): CodeHighlight | null => {
   try {
     const result =
-      language && lowlightLanguages.includes(language)
+      // `registered` also accepts aliases (ts, sh, yml...).
+      language && lowlight.registered(language)
         ? lowlight.highlight(language, code)
         : lowlight.highlightAuto(code);
 

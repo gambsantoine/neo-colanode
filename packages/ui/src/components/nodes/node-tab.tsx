@@ -8,6 +8,7 @@ import { FileTab } from '@colanode/ui/components/files/file-tab';
 import { FolderTab } from '@colanode/ui/components/folders/folder-tab';
 import { MessageTab } from '@colanode/ui/components/messages/message-tab';
 import { PageTab } from '@colanode/ui/components/pages/page-tab';
+import { PresentationTab } from '@colanode/ui/components/presentations/presentation-tab';
 import { RecordTab } from '@colanode/ui/components/records/record-tab';
 import { SpaceTab } from '@colanode/ui/components/spaces/space-tab';
 
@@ -44,6 +45,8 @@ export const NodeTab = ({ userId, nodeId }: NodeTabProps) => {
       return <ChatTab userId={userId} chat={node} />;
     case 'page':
       return <PageTab page={node} />;
+    case 'presentation':
+      return <PresentationTab presentation={node} />;
     case 'database':
       return <DatabaseTab database={node} />;
     case 'record':
