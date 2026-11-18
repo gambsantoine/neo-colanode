@@ -12,7 +12,7 @@ import { Link } from '@colanode/ui/components/ui/link';
 import { useServer } from '@colanode/ui/contexts/server';
 
 const MCP_PACKAGE_URL =
-  'https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.1/colanode-mcp-1.0.1.tgz';
+  'https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.1.0/colanode-mcp-1.1.0.tgz';
 
 const API_KEY_PLACEHOLDER = '<your api key>';
 

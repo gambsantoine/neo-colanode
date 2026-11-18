@@ -169,7 +169,7 @@ Le serveur s'installe sans cloner le repo : seul Node.js 20 ou plus est nécessa
 claude mcp add colanode \
   -e COLANODE_URL=http://localhost:3000 \
   -e COLANODE_API_KEY=<votre clé API> \
-  -- npx -y https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.1/colanode-mcp-1.0.1.tgz
+  -- npx -y https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.1.0/colanode-mcp-1.1.0.tgz
 ```
 
 **Autres clients MCP** (Claude Desktop, Cursor, etc.) :
@@ -181,7 +181,7 @@ claude mcp add colanode \
       "command": "npx",
       "args": [
         "-y",
-        "https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.0.1/colanode-mcp-1.0.1.tgz"
+        "https://github.com/gambsantoine/neo-colanode/releases/download/mcp-v1.1.0/colanode-mcp-1.1.0.tgz"
       ],
       "env": {
         "COLANODE_URL": "http://localhost:3000",
@@ -192,7 +192,7 @@ claude mcp add colanode \
 }
 ```
 
-La version 1.1.0 (wikis, outil `get_wiki_publication`) sera téléchargeable une fois le tag `mcp-v1.1.0` poussé ; remplacez alors `1.0.1` par `1.1.0` dans les commandes ci-dessus.
+Pour mettre à jour un client déjà configuré, remplacez l'URL du paquet par celle de la nouvelle version.
 
 Pour publier une nouvelle version, changez `version` dans `apps/mcp/package.json`, puis poussez un tag `mcp-vX.Y.Z` : le workflow `mcp-release.yml` construit le paquet et crée la release GitHub.
 
