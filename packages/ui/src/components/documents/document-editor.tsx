@@ -23,6 +23,7 @@ import {
 } from '@colanode/client/types';
 import { RichTextContent, richTextContentSchema } from '@colanode/core';
 import { encodeState, YDoc } from '@colanode/crdt';
+import { DocumentActionsBar } from '@colanode/ui/components/documents/document-actions-bar';
 import { useWorkspace } from '@colanode/ui/contexts/workspace';
 import {
   BlockquoteCommand,
@@ -89,7 +90,6 @@ import {
   Markdown,
 } from '@colanode/ui/editor/extensions';
 import { ToolbarMenu, ActionMenu } from '@colanode/ui/editor/menus';
-import { DocumentActionsBar } from '@colanode/ui/components/documents/document-actions-bar';
 
 interface DocumentEditorProps {
   node: LocalNode;

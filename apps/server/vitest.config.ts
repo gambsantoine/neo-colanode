@@ -1,8 +1,8 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import { defineConfig } from 'vitest/config';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -21,5 +21,12 @@ export default defineConfig({
     globalSetup: ['./test/global-setup.ts'],
     setupFiles: ['./test/setup-env.ts'],
     include: ['test/**/*.test.ts', 'test/**/*.spec.ts'],
+    // Unit tests mock the database and redis modules: they run with
+    // vitest.unit.config.ts, not against the containers.
+    exclude: [
+      'test/lib/**',
+      'test/api/wikis/!(*.integration).test.ts',
+      '**/node_modules/**',
+    ],
   },
 });
